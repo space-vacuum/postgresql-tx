@@ -1,0 +1,23 @@
+name:                postgresql-tx-squeal
+version:             0.0.0.0
+github:              "simspace/postgresql-tx"
+license:             BSD3
+author:              "Cary Robbins"
+maintainer:          "carymrobbins@gmail.com"
+copyright:           "2020 SimSpace"
+synopsis:            A safe transaction monad for use with various PostgreSQL Haskell libraries.
+category:            Database
+description:         Please see the README on GitHub at <https://github.com/simspace/postgresql-tx#readme>
+
+ghc-options:
+- -Wall
+
+dependencies:
+- base >= 4.7 && < 5
+- generics-sop
+- postgresql-tx
+- records-sop
+- squeal-postgresql
+
+library:
+  source-dirs: src
