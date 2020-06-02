@@ -2,6 +2,7 @@ resolver: lts-15.6
 
 packages:
 - .
+- example
 - monad-logger
 - persistent
 - query

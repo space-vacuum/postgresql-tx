@@ -10,12 +10,14 @@ import Control.Monad.Logger (LoggingT, runLoggingT)
 import Control.Monad.Trans (MonadTrans(lift))
 import Data.Int (Int64)
 import Database.PostgreSQL.Tx (Tx(TxEnv, tx), UnsafeTx(unsafeIOTx), TxM, unsafeRunTxM)
-import Database.PostgreSQL.Tx.MonadLogger (Logger)
 import qualified Database.PostgreSQL.Query as Query
 import qualified Database.PostgreSQL.Simple as Simple
 import qualified Database.PostgreSQL.Simple.Transaction as Simple
+import qualified Database.PostgreSQL.Tx.MonadLogger
 
 type PgQueryM = Query.PgMonadT (LoggingT TxM)
+
+type Logger = Database.PostgreSQL.Tx.MonadLogger.Logger
 
 pgWithTransaction :: (Simple.Connection, Logger) -> TxM a -> IO a
 pgWithTransaction = unsafeRunPgQueryTransaction Query.pgWithTransaction

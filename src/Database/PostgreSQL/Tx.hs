@@ -2,6 +2,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
@@ -17,7 +18,7 @@ module Database.PostgreSQL.Tx
   ) where
 
 import Control.Monad.IO.Class (MonadIO(liftIO))
-import Control.Monad.Trans.Reader (ReaderT(ReaderT), mapReaderT)
+import Control.Monad.Trans.Reader (ReaderT(ReaderT, runReaderT), mapReaderT)
 import GHC.TypeLits (ErrorMessage(Text), TypeError)
 
 newtype TxM a = UnsafeTxM { unsafeRunTxM :: IO a }
@@ -39,6 +40,10 @@ class Tx (f :: * -> *) where
   type TxEnv f :: *
   -- | Converts an 'f' to a 'TxM'.
   tx :: TxEnv f -> f a -> TxM a
+
+instance Tx (ReaderT r TxM) where
+  type TxEnv (ReaderT r TxM) = r
+  tx = flip runReaderT
 
 -- | Promote an unsafe 'io' action to a safe 't' transaction (will be some form of 'TxM').
 class UnsafeTx (io :: * -> *) (t :: * -> *) | t -> io where
