@@ -1,7 +1,8 @@
 module Example.PgSimple
   ( DB.Handle(..)
+  , Queries.Dependencies(..)
   , Queries.new
-  , Queries.with
+  , Queries.withHandle
   ) where
 
 import qualified Example.PgSimple.Internal.DB as DB

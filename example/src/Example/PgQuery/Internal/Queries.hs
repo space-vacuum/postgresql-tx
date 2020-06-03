@@ -11,38 +11,31 @@ import qualified Database.PostgreSQL.Query as PG.Query
 import qualified Database.PostgreSQL.Tx.Query as Tx
 import qualified Example.PgQuery.Internal.DB as DB
 
-new :: PG.Query.Connection -> Tx.Logger -> IO DB.Handle
-new conn logger =
-  Exception.evaluate DB.Handle
-    { DB.insertTwoMessages
-    , DB.fetchTwoMessages
+new :: Dependencies -> IO DB.Handle
+new deps =
+  pure DB.Handle
+    { DB.insertTwoMessages = insertTwoMessages deps
+    , DB.fetchTwoMessages = fetchTwoMessages deps
 
     , DB.close = mempty
     }
-  where
-  ?deps = Deps { conn, logger }
 
-with
-  :: PG.Query.Connection
-  -> Tx.Logger
-  -> (DB.Handle -> IO a)
-  -> IO a
-with conn logger = Exception.bracket (new conn logger) DB.close
+withHandle :: Dependencies -> (DB.Handle -> IO a) -> IO a
+withHandle deps = Exception.bracket (new deps) DB.close
 
-data Deps = Deps
+data Dependencies = Dependencies
   { conn :: PG.Query.Connection
   , logger :: Tx.Logger
   }
 
-run :: (?deps :: Deps) => Tx.PgQueryM a -> TxM a
-run = tx (conn, logger)
+run :: Dependencies -> Tx.PgQueryM a -> TxM a
+run deps = tx (conn, logger)
   where
-  Deps { conn, logger } = ?deps
+  Dependencies { conn, logger } = deps
 
 insertTwoMessages
-  :: (?deps :: Deps)
-  => String -> String -> TxM (Int, Int)
-insertTwoMessages s1 s2 = run do
+  :: Dependencies -> String -> String -> TxM (Int, Int)
+insertTwoMessages deps s1 s2 = run deps do
   Tx.pgQuery [PG.Query.sqlExp|
     insert into foo(message) values (#{s1}), (#{s2}) returning id
   |] >>= \case
@@ -50,9 +43,8 @@ insertTwoMessages s1 s2 = run do
     rows -> error $ "Expected exactly 2 rows, got " <> show (length rows)
 
 fetchTwoMessages
-  :: (?deps :: Deps)
-  => Int -> Int -> TxM (Maybe String, Maybe String)
-fetchTwoMessages k1 k2 = run do
+  :: Dependencies -> Int -> Int -> TxM (Maybe String, Maybe String)
+fetchTwoMessages deps k1 k2 = run deps do
   rows <- Tx.pgQuery [PG.Query.sqlExp|
     select id, message
     from foo

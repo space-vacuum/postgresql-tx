@@ -3,30 +3,55 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
+import Control.Concurrent (withMVar)
 import Control.Monad (when)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Logger (LoggingT(LoggingT), runStderrLoggingT)
+import Database.PostgreSQL.LibPQ as LibPQ
 import Database.PostgreSQL.Tx (TxM)
 import GHC.Stack (HasCallStack)
 import qualified Database.PostgreSQL.Simple as PG.Simple
+import qualified Database.PostgreSQL.Simple.Internal as PG.Simple.Internal
 import qualified Database.PostgreSQL.Tx.Query as Tx.Query
 import qualified Example.PgQuery
 import qualified Example.PgSimple
+import qualified Example.Squeal
 
 main :: IO ()
 main = do
   conn <- initDB
+  pqConn <- getLibPQConnection conn
   let logger = toLogger runStderrLoggingT
-      runTransaction :: TxM a -> IO a
+
+      -- For this demo we are using postgresql-query for handling transactions;
+      -- however, we could easily swap this out with any other postgresql-tx
+      -- supported library.
+  let runTransaction :: TxM a -> IO a
       runTransaction = Tx.Query.pgWithTransaction (conn, logger)
-  (ms1, ms2, ms3) <- do
-    Example.PgSimple.with conn \pgSimpleDB -> do
-      Example.PgQuery.with conn logger \pgQueryDB -> do
-        runTransaction do
-          demo pgSimpleDB pgQueryDB
+
+  let pgSimpleDeps =
+        Example.PgSimple.Dependencies
+          { Example.PgSimple.conn }
+  let pgQueryDeps =
+        Example.PgQuery.Dependencies
+          { Example.PgQuery.conn
+          , Example.PgQuery.logger
+          }
+  let squealDeps =
+        Example.Squeal.Dependencies
+          { Example.Squeal.conn = pqConn }
+  (ms1, ms2, ms3, ms4, ms5, ms6) <- do
+    Example.PgSimple.withHandle pgSimpleDeps \pgSimpleDB -> do
+      Example.PgQuery.withHandle pgQueryDeps \pgQueryDB -> do
+        Example.Squeal.withHandle squealDeps \squealDB -> do
+          runTransaction do
+            demo pgSimpleDB pgQueryDB squealDB
   ms1 `shouldBe` Just "hi"
   ms2 `shouldBe` Just "sup"
   ms3 `shouldBe` Just "wut"
+  ms4 `shouldBe` Just "nuthin"
+  ms5 `shouldBe` Just "ye"
+  ms6 `shouldBe` Just "k bye"
   putStrLn "Success!"
   where
   shouldBe :: (HasCallStack, Eq a, Show a) => a -> a -> IO ()
@@ -37,23 +62,23 @@ main = do
 demo
   :: Example.PgSimple.Handle
   -> Example.PgQuery.Handle
-  -> TxM (Maybe String, Maybe String, Maybe String)
-demo pgSimpleDB pgQueryDB = do
-  k1 <- insertMessage "hi"
-  (k2, k3) <- insertTwoMessages "sup" "wut"
-  ms2 <- fetchMessage k2
-  (ms1, ms3) <- fetchTwoMessages k1 k3
-  pure (ms1, ms2, ms3)
-  where
-  Example.PgSimple.Handle
-    { Example.PgSimple.insertMessage
-    , Example.PgSimple.fetchMessage
-    } = pgSimpleDB
-
-  Example.PgQuery.Handle
-    { Example.PgQuery.insertTwoMessages
-    , Example.PgQuery.fetchTwoMessages
-    } = pgQueryDB
+  -> Example.Squeal.Handle
+  -> TxM
+      ( Maybe String
+      , Maybe String
+      , Maybe String
+      , Maybe String
+      , Maybe String
+      , Maybe String
+      )
+demo pgSimpleDB pgQueryDB squealDB = do
+  k1 <- Example.PgSimple.insertMessage pgSimpleDB "hi"
+  (k2, k3) <- Example.PgQuery.insertTwoMessages pgQueryDB "sup" "wut"
+  ms2 <- Example.PgSimple.fetchMessage pgSimpleDB k2
+  (ms1, ms3) <- Example.PgQuery.fetchTwoMessages pgQueryDB k1 k3
+  (k4, k5, k6) <- Example.Squeal.insertThreeMessages squealDB "nuthin" "ye" "k bye"
+  (ms4, ms5, ms6) <- Example.Squeal.fetchThreeMessages squealDB k4 k5 k6
+  pure (ms1, ms2, ms3, ms4, ms5, ms6)
 
 initDB :: IO PG.Simple.Connection
 initDB = do
@@ -65,6 +90,10 @@ initDB = do
           <> ", message text not null unique"
           <> ")"
   pure conn
+
+getLibPQConnection :: PG.Simple.Connection -> IO LibPQ.Connection
+getLibPQConnection conn = do
+  withMVar (PG.Simple.Internal.connectionHandle conn) pure
 
 toLogger :: (LoggingT IO () -> IO ()) -> Tx.Query.Logger
 toLogger f loc src lvl msg =

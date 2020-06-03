@@ -7,9 +7,15 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Database.PostgreSQL.Tx.Squeal where
+module Database.PostgreSQL.Tx.Squeal
+  ( module Database.PostgreSQL.Tx.Squeal
+  , module Database.PostgreSQL.Tx.Squeal.Internal.Reexport
+  ) where
 
+import Data.ByteString (ByteString)
 import Database.PostgreSQL.Tx (Tx(TxEnv, tx), UnsafeTx(unsafeIOTx), TxM, unsafeRunTxM)
+import Database.PostgreSQL.Tx.Squeal.Internal.Reexport
+import qualified Database.PostgreSQL.LibPQ as LibPQ
 import qualified Generics.SOP as SOP
 import qualified Generics.SOP.Record as SOP
 import qualified Squeal.PostgreSQL as Squeal
@@ -22,12 +28,47 @@ unsafeSquealIOTx = unsafeIOTx
 unsafeSquealIOTx1
   :: (x1 -> Squeal.PQ db0 db1 IO a)
   -> x1 -> SquealM db0 db1 a
-unsafeSquealIOTx1 f x1 = unsafeIOTx $ f x1
+unsafeSquealIOTx1 f x1 = unsafeSquealIOTx $ f x1
 
 unsafeSquealIOTx2
   :: (x1 -> x2 -> Squeal.PQ db0 db1 IO a)
   -> x1 -> x2 -> SquealM db0 db1 a
-unsafeSquealIOTx2 f x1 x2 = unsafeIOTx $ f x1 x2
+unsafeSquealIOTx2 f x1 x2 = unsafeSquealIOTx $ f x1 x2
+
+unsafeSquealIOTx3
+  :: (x1 -> x2 -> x3 -> Squeal.PQ db0 db1 IO a)
+  -> x1 -> x2 -> x3 -> SquealM db0 db1 a
+unsafeSquealIOTx3 f x1 x2 x3 = unsafeSquealIOTx $ f x1 x2 x3
+
+getRow :: LibPQ.Row -> Result y -> SquealM db db y
+getRow = unsafeSquealIOTx2 Squeal.getRow
+
+firstRow :: Result y -> SquealM db db (Maybe y)
+firstRow = unsafeSquealIOTx1 Squeal.firstRow
+
+getRows :: Result y -> SquealM db db [y]
+getRows = unsafeSquealIOTx1 Squeal.getRows
+
+nextRow :: LibPQ.Row -> Result y -> LibPQ.Row -> SquealM db db (Maybe (LibPQ.Row, y))
+nextRow = unsafeSquealIOTx3 Squeal.nextRow
+
+ntuples :: Result y -> SquealM db db LibPQ.Row
+ntuples = unsafeSquealIOTx1 Squeal.ntuples
+
+nfields :: Result y -> SquealM db db LibPQ.Column
+nfields = unsafeSquealIOTx1 Squeal.nfields
+
+resultStatus :: Result y -> SquealM db db ExecStatus
+resultStatus = unsafeSquealIOTx1 Squeal.resultStatus
+
+okResult :: K LibPQ.Result row -> SquealM db db ()
+okResult = unsafeSquealIOTx1 Squeal.okResult
+
+resultErrorMessage :: Result y -> SquealM db db (Maybe ByteString)
+resultErrorMessage = unsafeSquealIOTx1 Squeal.resultErrorMessage
+
+resultErrorCode :: Result y -> SquealM db db (Maybe ByteString)
+resultErrorCode = unsafeSquealIOTx1 Squeal.resultErrorCode
 
 executeParams :: Squeal.Statement db x y -> x -> SquealM db db (Squeal.Result y)
 executeParams = unsafeSquealIOTx2 Squeal.executeParams
