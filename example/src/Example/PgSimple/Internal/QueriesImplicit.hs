@@ -1,3 +1,6 @@
+-- | Same as 'Example.PgSimple.Internal.Queries' but demonstrates dispatching
+-- the 'Dependencies' via @ImplicitParams@ so we can use @NamedFieldPuns@ when
+-- constructing our 'DB.Handle' record.
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE LambdaCase #-}

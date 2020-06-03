@@ -4,18 +4,22 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
-module Database.PostgreSQL.Tx.Query where
+module Database.PostgreSQL.Tx.Query
+  ( module Database.PostgreSQL.Tx.Query
+  , module Database.PostgreSQL.Tx.Query.Internal.Reexport
+  ) where
 
 import Control.Monad.Logger (LoggingT, runLoggingT)
 import Control.Monad.Trans (MonadTrans(lift))
 import Data.Int (Int64)
 import Database.PostgreSQL.Tx (Tx(TxEnv, tx), UnsafeTx(unsafeIOTx), TxM, unsafeRunTxM)
+import Database.PostgreSQL.Tx.Query.Internal.Reexport
 import qualified Database.PostgreSQL.Query as Query
 import qualified Database.PostgreSQL.Simple as Simple
 import qualified Database.PostgreSQL.Simple.Transaction as Simple
 import qualified Database.PostgreSQL.Tx.MonadLogger
 
-type PgQueryM = Query.PgMonadT (LoggingT TxM)
+type PgQueryM = PgMonadT (LoggingT TxM)
 
 type Logger = Database.PostgreSQL.Tx.MonadLogger.Logger
 
@@ -26,18 +30,18 @@ pgWithTransactionMode :: Simple.TransactionMode -> (Simple.Connection, Logger) -
 pgWithTransactionMode m = unsafeRunPgQueryTransaction (Query.pgWithTransactionMode m)
 
 -- Re-export of 'Query.pgQuery'
-pgQuery :: (Query.ToSqlBuilder q, Query.FromRow r) => q -> PgQueryM [r]
+pgQuery :: (ToSqlBuilder q, FromRow r) => q -> PgQueryM [r]
 pgQuery = unsafeIOTx . Query.pgQuery
 
 -- Re-export of 'Query.pgExecute'
-pgExecute :: (Query.ToSqlBuilder q) => q -> PgQueryM Int64
+pgExecute :: (ToSqlBuilder q) => q -> PgQueryM Int64
 pgExecute = unsafeIOTx . Query.pgExecute
 
-unsafePgQueryIOTx :: Query.PgMonadT (LoggingT IO) a -> PgQueryM a
+unsafePgQueryIOTx :: PgMonadT (LoggingT IO) a -> PgQueryM a
 unsafePgQueryIOTx = unsafeIOTx
 
 unsafeRunPgQueryTransaction
-  :: (Query.PgMonadT (LoggingT IO) a -> Query.PgMonadT (LoggingT IO) a)
+  :: (PgMonadT (LoggingT IO) a -> PgMonadT (LoggingT IO) a)
   -> (Simple.Connection, Logger)
   -> TxM a
   -> IO a
@@ -51,7 +55,7 @@ unsafeRunPgQueryTransaction f (c, logger) x =
 
 instance Tx PgQueryM where
   type TxEnv PgQueryM = (Simple.Connection, Logger)
-  tx (conn, logger) x = runLoggingT (Query.runPgMonadT conn x) logger
+  tx (conn, logger) x = runLoggingT (runPgMonadT conn x) logger
 
-instance (UnsafeTx io t) => UnsafeTx (Query.PgMonadT io) (Query.PgMonadT t) where
-  unsafeIOTx (Query.PgMonadT x) = Query.PgMonadT $ unsafeIOTx x
+instance (UnsafeTx io t) => UnsafeTx (PgMonadT io) (PgMonadT t) where
+  unsafeIOTx (PgMonadT x) = PgMonadT $ unsafeIOTx x

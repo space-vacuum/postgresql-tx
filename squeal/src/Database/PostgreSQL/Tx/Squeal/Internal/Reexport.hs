@@ -2,8 +2,9 @@ module Database.PostgreSQL.Tx.Squeal.Internal.Reexport
   ( module X
   ) where
 
-import Squeal.PostgreSQL as X hiding (
-    getRow
+-- Don't re-export names that we define in 'Database.PostgreSQL.Tx.Squeal'.
+import Squeal.PostgreSQL as X hiding
+  ( getRow
   , firstRow
   , getRows
   , nextRow
