@@ -27,7 +27,10 @@ main = do
       -- however, we could easily swap this out with any other postgresql-tx
       -- supported library.
   let runTransaction :: TxM a -> IO a
-      runTransaction = Tx.Query.pgWithTransaction (conn, logger)
+      runTransaction =
+        Tx.Query.pgWithTransactionMode
+          Tx.Query.defaultTransactionMode
+          (conn, logger)
 
   let pgSimpleDeps =
         Example.PgSimple.Dependencies
@@ -40,18 +43,20 @@ main = do
   let squealDeps =
         Example.Squeal.Dependencies
           { Example.Squeal.conn = pqConn }
+
   (ms1, ms2, ms3, ms4, ms5, ms6) <- do
     Example.PgSimple.withHandle pgSimpleDeps \pgSimpleDB -> do
       Example.PgQuery.withHandle pgQueryDeps \pgQueryDB -> do
         Example.Squeal.withHandle squealDeps \squealDB -> do
           runTransaction do
             demo pgSimpleDB pgQueryDB squealDB
-  ms1 `shouldBe` Just "hi"
-  ms2 `shouldBe` Just "sup"
-  ms3 `shouldBe` Just "wut"
-  ms4 `shouldBe` Just "nuthin"
-  ms5 `shouldBe` Just "ye"
-  ms6 `shouldBe` Just "k bye"
+
+  ms1 `shouldBe` Just "pg-simple: hi"
+  ms2 `shouldBe` Just "pg-query: sup"
+  ms3 `shouldBe` Just "pg-query: wut"
+  ms4 `shouldBe` Just "squeal: nuthin"
+  ms5 `shouldBe` Just "squeal: ye"
+  ms6 `shouldBe` Just "squeal: k bye"
   putStrLn "Success!"
   where
   shouldBe :: (HasCallStack, Eq a, Show a) => a -> a -> IO ()
@@ -72,11 +77,11 @@ demo
       , Maybe String
       )
 demo pgSimpleDB pgQueryDB squealDB = do
-  k1 <- Example.PgSimple.insertMessage pgSimpleDB "hi"
-  (k2, k3) <- Example.PgQuery.insertTwoMessages pgQueryDB "sup" "wut"
+  k1 <- Example.PgSimple.insertMessage pgSimpleDB "pg-simple: hi"
+  (k2, k3) <- Example.PgQuery.insertTwoMessages pgQueryDB "pg-query: sup" "pg-query: wut"
   ms2 <- Example.PgSimple.fetchMessage pgSimpleDB k2
   (ms1, ms3) <- Example.PgQuery.fetchTwoMessages pgQueryDB k1 k3
-  (k4, k5, k6) <- Example.Squeal.insertThreeMessages squealDB "nuthin" "ye" "k bye"
+  (k4, k5, k6) <- Example.Squeal.insertThreeMessages squealDB "squeal: nuthin" "squeal: ye" "squeal: k bye"
   (ms4, ms5, ms6) <- Example.Squeal.fetchThreeMessages squealDB k4 k5 k6
   pure (ms1, ms2, ms3, ms4, ms5, ms6)
 
