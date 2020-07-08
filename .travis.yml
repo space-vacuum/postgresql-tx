@@ -1,0 +1,19 @@
+sudo: false
+
+cache:
+  directories:
+  - $HOME/.stack
+
+services:
+- postgresql
+
+before_install:
+- mkdir -p ~/.local/bin
+- export PATH=$HOME/.local/bin:$PATH
+- travis_retry curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
+- travis_wait stack --no-terminal --skip-ghc-check setup
+
+script:
+- createdb postgresql-tx-example -U postgres
+- stack --no-terminal --skip-ghc-check test --pedantic
+- dropdb postgresql-tx-example -U postgres
