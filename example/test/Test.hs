@@ -87,7 +87,7 @@ demo pgSimpleDB pgQueryDB squealDB = do
 
 initDB :: IO PG.Simple.Connection
 initDB = do
-  conn <- PG.Simple.connectPostgreSQL "dbname=foo"
+  conn <- PG.Simple.connectPostgreSQL "dbname=postgresql-tx-example"
   _ <- PG.Simple.execute_ conn "drop table if exists foo"
   _ <- PG.Simple.execute_ conn $
         "create table if not exists foo"
