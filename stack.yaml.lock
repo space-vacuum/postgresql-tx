@@ -5,18 +5,15 @@
 
 packages:
 - completed:
-    cabal-file:
-      size: 4959
-      sha256: 8891f4eea893607c6e500d73f5f095e11f5bc7c0c20467e6b9040a3e1be039a5
     name: postgresql-query
     version: 3.5.0
-    git: git@github.com:Simspace/postgresql-query
+    git: https://github.com/Simspace/postgresql-query
     pantry-tree:
       size: 2486
       sha256: da6a8d783aa7e2942f89482ef1965b911ec87a9a10e9ae0c715c8ca4a5e6bc2d
     commit: b45346d7af5a5de6f083349ac1fcee830afe4112
   original:
-    git: git@github.com:Simspace/postgresql-query
+    git: https://github.com/Simspace/postgresql-query
     commit: b45346d7af5a5de6f083349ac1fcee830afe4112
 - completed:
     hackage: squeal-postgresql-0.6.0.2@sha256:2bd808a80c8c67da612049908152134b5d70650303239c6754ed0cf1dfab5305,5624

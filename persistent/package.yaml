@@ -1,23 +1,29 @@
 name:                postgresql-tx-persistent
 version:             0.0.0.0
-github:              "simspace/postgresql-tx"
+github:              "simspace/postgresql-tx/persistent"
 license:             BSD3
+license-file:        LICENSE.md
 author:              "Cary Robbins"
 maintainer:          "carymrobbins@gmail.com"
 copyright:           "2020 SimSpace"
-synopsis:            A safe transaction monad for use with various PostgreSQL Haskell libraries.
+synopsis:            postgresql-tx interfacing for use with persistent.
 category:            Database
 description:         Please see the README on GitHub at <https://github.com/simspace/postgresql-tx#readme>
+
+extra-source-files:
+- CHANGELOG.md
+- LICENSE.md
+- package.yaml
 
 ghc-options:
   - -Wall
 
 dependencies:
 - base >= 4.7 && < 5
-- monad-logger
-- persistent
-- persistent-postgresql
-- postgresql-tx
+- monad-logger >= 0.3.32 && < 0.4
+- persistent >= 2.10.5.2 && < 2.11
+- persistent-postgresql >= 2.10.1.2 && < 2.11
+- postgresql-tx >= 0.1.0.0 && < 0.2
 
 library:
   source-dirs: src

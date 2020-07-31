@@ -1,7 +1,8 @@
 name:                postgresql-tx
-version:             0.0.0.0
+version:             0.1.0.0
 github:              "simspace/postgresql-tx"
 license:             BSD3
+license-file:        LICENSE.md
 author:              "Cary Robbins"
 maintainer:          "carymrobbins@gmail.com"
 copyright:           "2020 SimSpace"
@@ -10,6 +11,9 @@ category:            Database
 description:         Please see the README on GitHub at <https://github.com/simspace/postgresql-tx#readme>
 
 extra-source-files:
+- CHANGELOG.md
+- LICENSE.md
+- package.yaml
 - README.md
 
 ghc-options:
@@ -17,7 +21,7 @@ ghc-options:
 
 dependencies:
 - base >= 4.7 && < 5
-- transformers
+- transformers >= 0.5.6.2 && < 0.6
 
 library:
   source-dirs: src
