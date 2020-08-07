@@ -13,7 +13,7 @@ module Database.PostgreSQL.Tx.Squeal
   ) where
 
 import Data.ByteString (ByteString)
-import Database.PostgreSQL.Tx (Tx(TxEnv, tx), UnsafeTx(unsafeIOTx), TxM, unsafeRunTxM)
+import Database.PostgreSQL.Tx (Tx(TxEnv, tx), UnsafeTx(unsafeIOTx), UnsafeUnliftTx(unsafeWithRunInIOTx), TxM, unsafeRunTxM)
 import Database.PostgreSQL.Tx.Squeal.Internal.Reexport
 import qualified Database.PostgreSQL.LibPQ as LibPQ
 import qualified Generics.SOP as SOP
@@ -201,3 +201,11 @@ instance Tx (SquealM db0 db1) where
 
 instance (UnsafeTx io t) => UnsafeTx (PQ db0 db1 io) (PQ db0 db1 t) where
   unsafeIOTx x = PQ \kConn -> unsafeIOTx (Squeal.unPQ x kConn)
+
+instance (UnsafeUnliftTx t, db0 ~ db1) => UnsafeUnliftTx (PQ db0 db1 t) where
+  -- 'innerBit' is used here instead of the more familiar 'inner', as 'inner'
+  -- would shadow squeal's 'inner'.
+  unsafeWithRunInIOTx innerBit =
+    PQ $ \conn ->
+      unsafeWithRunInIOTx \run ->
+        fmap K $ innerBit (\pq -> run $ fmap unK $ unPQ pq conn)

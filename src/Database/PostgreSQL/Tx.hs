@@ -7,6 +7,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 module Database.PostgreSQL.Tx
@@ -15,8 +16,12 @@ module Database.PostgreSQL.Tx
   , Tx(TxEnv, tx)
   , UnsafeTx(unsafeIOTx)
   , unsafeReaderIOTx
+  , mapExceptionTx
+  , throwExceptionTx
+  , UnsafeUnliftTx(unsafeWithRunInIOTx)
   ) where
 
+import Control.Exception (Exception, catch, throwIO)
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Control.Monad.Trans.Reader (ReaderT(ReaderT, runReaderT), mapReaderT)
 import GHC.TypeLits (ErrorMessage(Text), TypeError)
@@ -61,3 +66,30 @@ unsafeReaderIOTx
   :: (UnsafeTx (ReaderT r io) (ReaderT r t))
   => (r -> io a) -> ReaderT r t a
 unsafeReaderIOTx = unsafeIOTx . ReaderT
+
+throwExceptionTx :: (MonadIO io, UnsafeTx io t, Exception e) => e -> t a
+throwExceptionTx ex = unsafeIOTx $ liftIO $ throwIO ex
+
+mapExceptionTx
+  :: (UnsafeUnliftTx t, Exception e, Exception e')
+  => (e -> Maybe e')
+  -> t a
+  -> t a
+mapExceptionTx mapper action = do
+  unsafeWithRunInIOTx \run -> do
+    catch (run action) \ex -> do
+      case mapper ex of
+        Nothing -> throwIO ex
+        Just ex' -> throwIO ex'
+
+class Monad t => UnsafeUnliftTx (t :: * -> *) where
+  unsafeWithRunInIOTx :: ((forall a. t a -> IO a) -> IO b) -> t b
+
+instance UnsafeUnliftTx TxM where
+  unsafeWithRunInIOTx inner = unsafeRunIOInTxM $ inner unsafeRunTxM
+
+instance UnsafeUnliftTx t => UnsafeUnliftTx (ReaderT r t) where
+  unsafeWithRunInIOTx inner =
+    ReaderT \r ->
+      unsafeWithRunInIOTx \run ->
+        inner (run . flip runReaderT r)
