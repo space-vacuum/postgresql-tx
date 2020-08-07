@@ -14,8 +14,9 @@ module Database.PostgreSQL.Tx.Query
 import Control.Monad.Logger (LoggingT, runLoggingT)
 import Control.Monad.Trans (MonadTrans(lift))
 import Data.Int (Int64)
-import Database.PostgreSQL.Tx (Tx(TxEnv, tx), UnsafeTx(unsafeIOTx), UnsafeUnliftTx(unsafeWithRunInIOTx), TxM, unsafeRunTxM)
+import Database.PostgreSQL.Tx (Tx(TxEnv, tx), TxM)
 import Database.PostgreSQL.Tx.Query.Internal.Reexport
+import Database.PostgreSQL.Tx.Unsafe (UnsafeTx(unsafeIOTx), UnsafeUnliftTx(unsafeWithRunInIOTx), unsafeRunTxM)
 import qualified Database.PostgreSQL.Query as Query
 import qualified Database.PostgreSQL.Simple as Simple
 import qualified Database.PostgreSQL.Simple.Transaction as Simple

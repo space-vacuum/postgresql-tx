@@ -8,7 +8,8 @@
 module Database.PostgreSQL.Tx.MonadLogger where
 
 import Control.Monad.Logger (LoggingT(LoggingT, runLoggingT), Loc, LogLevel, LogSource, LogStr, mapLoggingT)
-import Database.PostgreSQL.Tx (Tx(TxEnv, tx), UnsafeTx(unsafeIOTx), UnsafeUnliftTx(unsafeWithRunInIOTx), TxM)
+import Database.PostgreSQL.Tx (TxM, Tx(TxEnv, tx))
+import Database.PostgreSQL.Tx.Unsafe (UnsafeTx(unsafeIOTx), UnsafeUnliftTx(unsafeWithRunInIOTx))
 
 type Logger = Loc -> LogSource -> LogLevel -> LogStr -> IO ()
 
@@ -19,7 +20,7 @@ instance Tx (LoggingT TxM) where
 instance (UnsafeTx io t) => UnsafeTx (LoggingT io) (LoggingT t) where
   unsafeIOTx = mapLoggingT unsafeIOTx
 
-instance UnsafeUnliftTx t => UnsafeUnliftTx (LoggingT t) where
+instance (UnsafeUnliftTx t) => UnsafeUnliftTx (LoggingT t) where
   unsafeWithRunInIOTx inner =
     LoggingT \logger ->
       unsafeWithRunInIOTx \run ->

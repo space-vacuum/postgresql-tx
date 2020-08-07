@@ -3,7 +3,8 @@ module Database.PostgreSQL.Tx.Simple where
 
 import Control.Monad.Trans.Reader (ReaderT)
 import Data.Int (Int64)
-import Database.PostgreSQL.Tx (TxM, unsafeRunTxM, unsafeReaderIOTx)
+import Database.PostgreSQL.Tx (TxM)
+import Database.PostgreSQL.Tx.Unsafe (unsafeReaderIOTx, unsafeRunTxM)
 import qualified Database.PostgreSQL.Simple as Simple
 import qualified Database.PostgreSQL.Simple.Transaction as Simple
 

@@ -13,8 +13,9 @@ module Database.PostgreSQL.Tx.Squeal
   ) where
 
 import Data.ByteString (ByteString)
-import Database.PostgreSQL.Tx (Tx(TxEnv, tx), UnsafeTx(unsafeIOTx), UnsafeUnliftTx(unsafeWithRunInIOTx), TxM, unsafeRunTxM)
+import Database.PostgreSQL.Tx (Tx(TxEnv, tx), TxM)
 import Database.PostgreSQL.Tx.Squeal.Internal.Reexport
+import Database.PostgreSQL.Tx.Unsafe (UnsafeTx(unsafeIOTx), UnsafeUnliftTx(unsafeWithRunInIOTx), unsafeRunTxM)
 import qualified Database.PostgreSQL.LibPQ as LibPQ
 import qualified Generics.SOP as SOP
 import qualified Generics.SOP.Record as SOP
