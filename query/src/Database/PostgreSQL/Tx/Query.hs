@@ -1,5 +1,7 @@
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -12,7 +14,7 @@ module Database.PostgreSQL.Tx.Query
 import Control.Monad.Logger (LoggingT, runLoggingT)
 import Control.Monad.Trans (MonadTrans(lift))
 import Data.Int (Int64)
-import Database.PostgreSQL.Tx (Tx(TxEnv, tx), UnsafeTx(unsafeIOTx), TxM, unsafeRunTxM)
+import Database.PostgreSQL.Tx (Tx(TxEnv, tx), UnsafeTx(unsafeIOTx), UnsafeUnliftTx(unsafeWithRunInIOTx), TxM, unsafeRunTxM)
 import Database.PostgreSQL.Tx.Query.Internal.Reexport
 import qualified Database.PostgreSQL.Query as Query
 import qualified Database.PostgreSQL.Simple as Simple
@@ -59,3 +61,8 @@ instance Tx PgQueryM where
 
 instance (UnsafeTx io t) => UnsafeTx (PgMonadT io) (PgMonadT t) where
   unsafeIOTx (PgMonadT x) = PgMonadT $ unsafeIOTx x
+
+instance (UnsafeUnliftTx t) => UnsafeUnliftTx (PgMonadT t) where
+  unsafeWithRunInIOTx inner =
+    PgMonadT $ unsafeWithRunInIOTx \run ->
+      inner (run . unPgMonadT)
