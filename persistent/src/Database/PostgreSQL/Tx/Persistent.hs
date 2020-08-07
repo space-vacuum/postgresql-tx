@@ -3,7 +3,8 @@
 module Database.PostgreSQL.Tx.Persistent where
 
 import Control.Monad.Logger (Loc, LogLevel, LogSource, LogStr)
-import Database.PostgreSQL.Tx (UnsafeTx(unsafeIOTx), TxM)
+import Database.PostgreSQL.Tx (TxM)
+import Database.PostgreSQL.Tx.Unsafe (UnsafeTx(unsafeIOTx))
 import qualified Database.Persist.Postgresql as Persist
 
 type Logger = Loc -> LogSource -> LogLevel -> LogStr -> IO ()
