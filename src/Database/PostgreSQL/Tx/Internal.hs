@@ -76,7 +76,7 @@ instance Tx (ReaderT r TxM) where
 -- of 'TxM').
 --
 -- @since 0.1.0.0
-class UnsafeTx (io :: * -> *) (t :: * -> *) | t -> io where
+class (Monad io, Monad t) => UnsafeTx (io :: * -> *) (t :: * -> *) | t -> io where
   -- | Converts an @io@ action to a @t@, which will be some form of 'TxM'. Use
   -- this function with care - arbitrary 'IO' should only be run within a
   -- transaction when truly necessary.
