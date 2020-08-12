@@ -22,7 +22,7 @@ import Database.PostgreSQL.Tx.Internal
 -- implementation monad from the various @postgresql-tx-*@ packages.
 --
 -- @since 0.2.0.0
-throwExceptionTx :: (MonadIO io, UnsafeTx io t, Exception e) => e -> t a
+throwExceptionTx :: (UnsafeTx io t, Exception e) => e -> t a
 throwExceptionTx ex = unsafeIOTx $ liftIO $ throwIO ex
 
 -- | Catch an exception and map it to another exception type before rethrowing.
