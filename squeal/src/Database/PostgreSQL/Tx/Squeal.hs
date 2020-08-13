@@ -23,21 +23,24 @@ import qualified Squeal.PostgreSQL as Squeal
 
 type SquealM db0 db1 = PQ db0 db1 TxM
 
-unsafeSquealIOTx :: PQ db0 db1 IO a -> SquealM db0 db1 a
+unsafeSquealIOTx :: (db0 ~ db1) => PQ db0 db1 IO a -> SquealM db0 db1 a
 unsafeSquealIOTx = unsafeIOTx
 
 unsafeSquealIOTx1
-  :: (x1 -> PQ db0 db1 IO a)
+  :: (db0 ~ db1)
+  => (x1 -> PQ db0 db1 IO a)
   -> x1 -> SquealM db0 db1 a
 unsafeSquealIOTx1 f x1 = unsafeSquealIOTx $ f x1
 
 unsafeSquealIOTx2
-  :: (x1 -> x2 -> PQ db0 db1 IO a)
+  :: (db0 ~ db1)
+  => (x1 -> x2 -> PQ db0 db1 IO a)
   -> x1 -> x2 -> SquealM db0 db1 a
 unsafeSquealIOTx2 f x1 x2 = unsafeSquealIOTx $ f x1 x2
 
 unsafeSquealIOTx3
-  :: (x1 -> x2 -> x3 -> PQ db0 db1 IO a)
+  :: (db0 ~ db1)
+  => (x1 -> x2 -> x3 -> PQ db0 db1 IO a)
   -> x1 -> x2 -> x3 -> SquealM db0 db1 a
 unsafeSquealIOTx3 f x1 x2 x3 = unsafeSquealIOTx $ f x1 x2 x3
 
@@ -200,7 +203,7 @@ instance Tx (SquealM db0 db1) where
   type TxEnv (SquealM db0 db1) = Connection
   tx conn x = evalPQ x (Squeal.K conn)
 
-instance (UnsafeTx io t) => UnsafeTx (PQ db0 db1 io) (PQ db0 db1 t) where
+instance (UnsafeTx io t, db0 ~ db1) => UnsafeTx (PQ db0 db1 io) (PQ db0 db1 t) where
   unsafeIOTx x = PQ \kConn -> unsafeIOTx (Squeal.unPQ x kConn)
 
 instance (UnsafeUnliftTx t, db0 ~ db1) => UnsafeUnliftTx (PQ db0 db1 t) where
