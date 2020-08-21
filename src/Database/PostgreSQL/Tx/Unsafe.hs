@@ -5,6 +5,7 @@ module Database.PostgreSQL.Tx.Unsafe
     -- ** Operations
     unsafeRunIOInTxM
   , UnsafeTx(unsafeIOTx)
+  , unsafeLiftIOTx
   , unsafeReaderIOTx
   , UnsafeUnliftTx(unsafeWithRunInIOTx)
 

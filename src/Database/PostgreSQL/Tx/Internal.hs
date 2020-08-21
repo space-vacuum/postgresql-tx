@@ -93,6 +93,12 @@ instance UnsafeTx IO TxM where
 instance (UnsafeTx io t) => UnsafeTx (ReaderT r io) (ReaderT r t) where
   unsafeIOTx = mapReaderT unsafeIOTx
 
+-- | A variant of 'liftIO' to promote 'IO' directly to some variant of 'TxM'.
+--
+-- @since 0.2.0.0
+unsafeLiftIOTx :: (UnsafeTx io t, MonadIO io) => IO a -> t a
+unsafeLiftIOTx = unsafeIOTx . liftIO
+
 -- | Run a specific database library implementation monad in 'IO', given that
 -- monad's runtime environment. Use of this function outside of test suites
 -- should be rare.
