@@ -1,6 +1,6 @@
 name:                postgresql-tx-query
 version:             0.2.0.0
-github:              "simspace/postgresql-tx/query"
+github:              "simspace/postgresql-tx"
 license:             BSD3
 license-file:        LICENSE.md
 author:              "Cary Robbins"

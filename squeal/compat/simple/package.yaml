@@ -1,6 +1,6 @@
 name:                postgresql-tx-squeal-compat-simple
 version:             0.1.0.0
-github:              "simspace/postgresql-tx/squeal/compat/simple"
+github:              "simspace/postgresql-tx"
 license:             BSD3
 license-file:        LICENSE.md
 author:              "Jason Shipman"

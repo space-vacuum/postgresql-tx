@@ -1,6 +1,6 @@
 name:                postgresql-tx-monad-logger
 version:             0.2.0.0
-github:              "simspace/postgresql-tx/monad-logger"
+github:              "simspace/postgresql-tx"
 license:             BSD3
 license-file:        LICENSE.md
 author:              "Cary Robbins"
