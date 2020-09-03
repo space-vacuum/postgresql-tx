@@ -1,139 +1,188 @@
-{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeSynonymInstances #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_GHC -fno-warn-orphans #-}
 module Database.PostgreSQL.Tx.Squeal
-  ( module Database.PostgreSQL.Tx.Squeal
+  ( SquealEnv
+  , SquealM
+  , SquealSchemas(SquealSchemas)
+  , SquealConnection
+  , mkSquealConnection
+  , module Database.PostgreSQL.Tx.Squeal
   , module Database.PostgreSQL.Tx.Squeal.Internal.Reexport
   ) where
 
 import Data.ByteString (ByteString)
-import Database.PostgreSQL.Tx (Tx(TxEnv, tx), TxM)
+import Database.PostgreSQL.Tx (TxM)
+import Database.PostgreSQL.Tx.Squeal.Internal
 import Database.PostgreSQL.Tx.Squeal.Internal.Reexport
-import Database.PostgreSQL.Tx.Unsafe (UnsafeTx(unsafeIOTx), UnsafeUnliftTx(unsafeWithRunInIOTx), unsafeRunTxM)
 import qualified Database.PostgreSQL.LibPQ as LibPQ
 import qualified Generics.SOP as SOP
 import qualified Generics.SOP.Record as SOP
 import qualified Squeal.PostgreSQL as Squeal
 
-type SquealM db0 db1 = PQ db0 db1 TxM
+-- | Analogue of 'Squeal.getRow'.
+--
+-- @since 0.1.0.0
+getRow :: forall db r y. (SquealEnv db r) => LibPQ.Row -> Result y -> TxM r y
+getRow = unsafeSquealIOTxM2 @db Squeal.getRow
 
-unsafeSquealIOTx :: (db0 ~ db1) => PQ db0 db1 IO a -> SquealM db0 db1 a
-unsafeSquealIOTx = unsafeIOTx
+-- | Analogue of 'Squeal.firstRow'.
+--
+-- @since 0.1.0.0
+firstRow :: forall db r y. (SquealEnv db r) => Result y -> TxM r (Maybe y)
+firstRow = unsafeSquealIOTxM1 @db Squeal.firstRow
 
-unsafeSquealIOTx1
-  :: (db0 ~ db1)
-  => (x1 -> PQ db0 db1 IO a)
-  -> x1 -> SquealM db0 db1 a
-unsafeSquealIOTx1 f x1 = unsafeSquealIOTx $ f x1
+-- | Analogue of 'Squeal.getRows'.
+--
+-- @since 0.1.0.0
+getRows :: forall db r y. (SquealEnv db r) => Result y -> TxM r [y]
+getRows = unsafeSquealIOTxM1 @db Squeal.getRows
 
-unsafeSquealIOTx2
-  :: (db0 ~ db1)
-  => (x1 -> x2 -> PQ db0 db1 IO a)
-  -> x1 -> x2 -> SquealM db0 db1 a
-unsafeSquealIOTx2 f x1 x2 = unsafeSquealIOTx $ f x1 x2
+-- | Analogue of 'Squeal.nextRow'.
+--
+-- @since 0.1.0.0
+nextRow :: forall db r y. (SquealEnv db r) => LibPQ.Row -> Result y -> LibPQ.Row -> TxM r (Maybe (LibPQ.Row, y))
+nextRow = unsafeSquealIOTxM3 @db Squeal.nextRow
 
-unsafeSquealIOTx3
-  :: (db0 ~ db1)
-  => (x1 -> x2 -> x3 -> PQ db0 db1 IO a)
-  -> x1 -> x2 -> x3 -> SquealM db0 db1 a
-unsafeSquealIOTx3 f x1 x2 x3 = unsafeSquealIOTx $ f x1 x2 x3
+-- | Analogue of 'Squeal.ntuples'.
+--
+-- @since 0.1.0.0
+ntuples :: forall db r y. (SquealEnv db r) => Result y -> TxM r LibPQ.Row
+ntuples = unsafeSquealIOTxM1 @db Squeal.ntuples
 
-getRow :: LibPQ.Row -> Result y -> SquealM db db y
-getRow = unsafeSquealIOTx2 Squeal.getRow
+-- | Analogue of 'Squeal.nfields'.
+--
+-- @since 0.1.0.0
+nfields :: forall db r y. (SquealEnv db r) => Result y -> TxM r LibPQ.Column
+nfields = unsafeSquealIOTxM1 @db Squeal.nfields
 
-firstRow :: Result y -> SquealM db db (Maybe y)
-firstRow = unsafeSquealIOTx1 Squeal.firstRow
+-- | Analogue of 'Squeal.resultStatus'.
+--
+-- @since 0.1.0.0
+resultStatus :: forall db r y. (SquealEnv db r) => Result y -> TxM r ExecStatus
+resultStatus = unsafeSquealIOTxM1 @db Squeal.resultStatus
 
-getRows :: Result y -> SquealM db db [y]
-getRows = unsafeSquealIOTx1 Squeal.getRows
+-- | Analogue of 'Squeal.okResult'.
+--
+-- @since 0.1.0.0
+okResult :: forall db r row. (SquealEnv db r) => K LibPQ.Result row -> TxM r ()
+okResult = unsafeSquealIOTxM1 @db Squeal.okResult
 
-nextRow :: LibPQ.Row -> Result y -> LibPQ.Row -> SquealM db db (Maybe (LibPQ.Row, y))
-nextRow = unsafeSquealIOTx3 Squeal.nextRow
+-- | Analogue of 'Squeal.resultErrorMessage'.
+--
+-- @since 0.1.0.0
+resultErrorMessage :: forall db r y. (SquealEnv db r) => Result y -> TxM r (Maybe ByteString)
+resultErrorMessage = unsafeSquealIOTxM1 @db Squeal.resultErrorMessage
 
-ntuples :: Result y -> SquealM db db LibPQ.Row
-ntuples = unsafeSquealIOTx1 Squeal.ntuples
+-- | Analogue of 'Squeal.resultErrorCode'.
+--
+-- @since 0.1.0.0
+resultErrorCode :: forall db r y. (SquealEnv db r) => Result y -> TxM r (Maybe ByteString)
+resultErrorCode = unsafeSquealIOTxM1 @db Squeal.resultErrorCode
 
-nfields :: Result y -> SquealM db db LibPQ.Column
-nfields = unsafeSquealIOTx1 Squeal.nfields
+-- | Analogue of 'Squeal.executeParams'.
+--
+-- @since 0.1.0.0
+executeParams :: forall db r x y. (SquealEnv db r) => Statement db x y -> x -> TxM r (Result y)
+executeParams = unsafeSquealIOTxM2 @db Squeal.executeParams
 
-resultStatus :: Result y -> SquealM db db ExecStatus
-resultStatus = unsafeSquealIOTx1 Squeal.resultStatus
+-- | Analogue of 'Squeal.executeParams_'.
+--
+-- @since 0.1.0.0
+executeParams_ :: forall db r x. (SquealEnv db r) => Statement db x () -> x -> TxM r ()
+executeParams_ = unsafeSquealIOTxM2 @db Squeal.executeParams_
 
-okResult :: K LibPQ.Result row -> SquealM db db ()
-okResult = unsafeSquealIOTx1 Squeal.okResult
+-- | Analogue of 'Squeal.execute'.
+--
+-- @since 0.1.0.0
+execute :: forall db r y. (SquealEnv db r) => Statement db () y -> TxM r (Result y)
+execute = unsafeSquealIOTxM1 @db Squeal.execute
 
-resultErrorMessage :: Result y -> SquealM db db (Maybe ByteString)
-resultErrorMessage = unsafeSquealIOTx1 Squeal.resultErrorMessage
+-- | Analogue of 'Squeal.execute_'.
+--
+-- @since 0.1.0.0
+execute_ :: forall db r. (SquealEnv db r) => Statement db () () -> TxM r ()
+execute_ = unsafeSquealIOTxM1 @db Squeal.execute_
 
-resultErrorCode :: Result y -> SquealM db db (Maybe ByteString)
-resultErrorCode = unsafeSquealIOTx1 Squeal.resultErrorCode
-
-executeParams :: Statement db x y -> x -> SquealM db db (Result y)
-executeParams = unsafeSquealIOTx2 Squeal.executeParams
-
-executeParams_ :: Statement db x () -> x -> SquealM db db ()
-executeParams_ = unsafeSquealIOTx2 Squeal.executeParams_
-
-execute :: Statement db () y -> SquealM db db (Result y)
-execute = unsafeSquealIOTx1 Squeal.execute
-
-execute_ :: Statement db () () -> SquealM db db ()
-execute_ = unsafeSquealIOTx1 Squeal.execute_
-
+-- | Analogue of 'Squeal.executePrepared'.
+--
+-- @since 0.1.0.0
 executePrepared
   :: (Traversable list)
-  => Statement db x y -> list x -> SquealM db db (list (Result y))
-executePrepared = unsafeSquealIOTx2 Squeal.executePrepared
+  => Statement db x y -> list x -> SquealM db (list (Result y))
+executePrepared = unsafeSquealIOTxM2 Squeal.executePrepared
 
+-- | Analogue of 'Squeal.executePrepared_'.
+--
+-- @since 0.1.0.0
 executePrepared_
   :: (Foldable list)
-  => Statement db x () -> list x -> SquealM db db ()
-executePrepared_ = unsafeSquealIOTx2 Squeal.executePrepared_
+  => Statement db x () -> list x -> SquealM db ()
+executePrepared_ = unsafeSquealIOTxM2 Squeal.executePrepared_
 
+-- | Analogue of 'Squeal.manipulateParams'.
+--
+-- @since 0.1.0.0
 manipulateParams
   :: ( GenericParams db params x xs
      , Squeal.GenericRow row y ys
      )
   => Manipulation '[] db params row
   -> x
-  -> SquealM db db (Result y)
-manipulateParams = unsafeSquealIOTx2 Squeal.manipulateParams
+  -> SquealM db (Result y)
+manipulateParams = unsafeSquealIOTxM2 Squeal.manipulateParams
 
+-- | Analogue of 'Squeal.manipulateParams_'.
+--
+-- @since 0.1.0.0
 manipulateParams_
   :: (GenericParams db params x xs)
-  => Manipulation '[] db params '[] -> x -> SquealM db db ()
-manipulateParams_ = unsafeSquealIOTx2 Squeal.manipulateParams_
+  => Manipulation '[] db params '[] -> x -> SquealM db ()
+manipulateParams_ = unsafeSquealIOTxM2 Squeal.manipulateParams_
 
+-- | Analogue of 'Squeal.manipulate'.
+--
+-- @since 0.1.0.0
 manipulate
   :: (Squeal.GenericRow row y ys)
-  => Manipulation '[] db '[] row -> SquealM db db (Result y)
-manipulate = unsafeSquealIOTx1 Squeal.manipulate
+  => Manipulation '[] db '[] row -> SquealM db (Result y)
+manipulate = unsafeSquealIOTxM1 Squeal.manipulate
 
+-- | Analogue of 'Squeal.manipulate_'.
+--
+-- @since 0.1.0.0
 manipulate_
-  :: Manipulation '[] db '[] '[] -> SquealM db db ()
-manipulate_ = unsafeSquealIOTx1 Squeal.manipulate_
+  :: Manipulation '[] db '[] '[] -> SquealM db ()
+manipulate_ = unsafeSquealIOTxM1 Squeal.manipulate_
 
+-- | Analogue of 'Squeal.runQueryParams'.
+--
+-- @since 0.1.0.0
 runQueryParams
   :: ( GenericParams db params x xs
      , SOP.IsRecord y ys
      , SOP.AllZip Squeal.FromField row ys
      )
-  => Squeal.Query '[] '[] db params row -> x -> SquealM db db (Result y)
-runQueryParams = unsafeSquealIOTx2 Squeal.runQueryParams
+  => Squeal.Query '[] '[] db params row -> x -> SquealM db (Result y)
+runQueryParams = unsafeSquealIOTxM2 Squeal.runQueryParams
 
+-- | Analogue of 'Squeal.runQuery'.
+--
+-- @since 0.1.0.0
 runQuery
   :: ( SOP.IsRecord y ys
      , SOP.AllZip Squeal.FromField row ys
      )
-  => Squeal.Query '[] '[] db '[] row -> SquealM db db (Result y)
-runQuery = unsafeSquealIOTx1 Squeal.runQuery
+  => Squeal.Query '[] '[] db '[] row -> SquealM db (Result y)
+runQuery = unsafeSquealIOTxM1 Squeal.runQuery
 
+-- | Analogue of 'Squeal.traversePrepared'.
+--
+-- @since 0.1.0.0
 traversePrepared
   :: ( GenericParams db params x xs
      , Traversable list
@@ -142,9 +191,12 @@ traversePrepared
      )
   => Manipulation '[] db params row
   -> list x
-  -> SquealM db db (list (Result y))
-traversePrepared = unsafeSquealIOTx2 Squeal.traversePrepared
+  -> SquealM db (list (Result y))
+traversePrepared = unsafeSquealIOTxM2 Squeal.traversePrepared
 
+-- | Analogue of 'Squeal.forPrepared'.
+--
+-- @since 0.1.0.0
 forPrepared
   :: ( GenericParams db params x xs
      , Traversable list
@@ -153,63 +205,59 @@ forPrepared
      )
   => list x
   -> Manipulation '[] db params row
-  -> SquealM db db (list (Result y))
-forPrepared = unsafeSquealIOTx2 Squeal.forPrepared
+  -> SquealM db (list (Result y))
+forPrepared = unsafeSquealIOTxM2 Squeal.forPrepared
 
+-- | Analogue of 'Squeal.traversePrepared_'.
+--
+-- @since 0.1.0.0
 traversePrepared_
   :: ( GenericParams db params x xs
      , Foldable list
      )
   => Manipulation '[] db params '[]
   -> list x
-  -> SquealM db db ()
-traversePrepared_ = unsafeSquealIOTx2 Squeal.traversePrepared_
+  -> SquealM db ()
+traversePrepared_ = unsafeSquealIOTxM2 Squeal.traversePrepared_
 
+-- | Analogue of 'Squeal.forPrepared_'.
+--
+-- @since 0.1.0.0
 forPrepared_
   :: ( GenericParams db params x xs
      , Foldable list
      )
   => list x
   -> Manipulation '[] db params '[]
-  -> SquealM db db ()
-forPrepared_ = unsafeSquealIOTx2 Squeal.forPrepared_
+  -> SquealM db ()
+forPrepared_ = unsafeSquealIOTxM2 Squeal.forPrepared_
 
-transactionally :: TransactionMode -> Connection -> TxM a -> IO a
-transactionally m = unsafeRunSquealTransaction (Squeal.transactionally m)
+-- | Analogue of 'Squeal.transactionally'.
+--
+-- @since 0.1.0.0
+transactionally :: forall db r a. (SquealEnv db r) => TransactionMode -> r -> TxM r a -> IO a
+transactionally m = unsafeRunSquealTransaction @db (Squeal.transactionally @_ @db m)
 
-transactionally_ :: Connection -> TxM a -> IO a
-transactionally_ = unsafeRunSquealTransaction Squeal.transactionally_
+-- | Analogue of 'Squeal.transactionally_'.
+--
+-- @since 0.1.0.0
+transactionally_ :: forall db r a. (SquealEnv db r) => r -> TxM r a -> IO a
+transactionally_ = unsafeRunSquealTransaction @db Squeal.transactionally_
 
-transactionallyRetry :: TransactionMode -> Connection -> TxM a -> IO a
-transactionallyRetry m = unsafeRunSquealTransaction (Squeal.transactionallyRetry m)
+-- | Analogue of 'Squeal.transactionallyRetry'.
+--
+-- @since 0.1.0.0
+transactionallyRetry :: forall db r a. (SquealEnv db r) => TransactionMode -> r -> TxM r a -> IO a
+transactionallyRetry m = unsafeRunSquealTransaction @db (Squeal.transactionallyRetry m)
 
-ephemerally :: TransactionMode -> Connection -> TxM a -> IO a
-ephemerally m = unsafeRunSquealTransaction (Squeal.ephemerally m)
+-- | Analogue of 'Squeal.ephemerally'.
+--
+-- @since 0.1.0.0
+ephemerally :: forall db r a. (SquealEnv db r) => TransactionMode -> r -> TxM r a -> IO a
+ephemerally m = unsafeRunSquealTransaction @db (Squeal.ephemerally m)
 
-ephemerally_ :: Connection -> TxM a -> IO a
-ephemerally_ = unsafeRunSquealTransaction Squeal.ephemerally_
-
-unsafeRunSquealTransaction
-  :: (PQ db0 db1 IO a -> PQ db0 db1 IO a)
-  -> Connection
-  -> TxM a
-  -> IO a
-unsafeRunSquealTransaction f conn x =
-  flip Squeal.evalPQ (Squeal.K conn)
-    $ f
-    $ PQ \_ -> Squeal.K <$> unsafeRunTxM x
-
-instance Tx (SquealM db0 db1) where
-  type TxEnv (SquealM db0 db1) = Connection
-  tx conn x = evalPQ x (Squeal.K conn)
-
-instance (UnsafeTx io t, db0 ~ db1) => UnsafeTx (PQ db0 db1 io) (PQ db0 db1 t) where
-  unsafeIOTx x = PQ \kConn -> unsafeIOTx (Squeal.unPQ x kConn)
-
-instance (UnsafeUnliftTx t, db0 ~ db1) => UnsafeUnliftTx (PQ db0 db1 t) where
-  -- 'innerBit' is used here instead of the more familiar 'inner', as 'inner'
-  -- would shadow squeal's 'inner'.
-  unsafeWithRunInIOTx innerBit =
-    PQ $ \conn ->
-      unsafeWithRunInIOTx \run ->
-        fmap K $ innerBit (\pq -> run $ fmap unK $ unPQ pq conn)
+-- | Analogue of 'Squeal.ephemerally_'.
+--
+-- @since 0.1.0.0
+ephemerally_ :: forall db r a. (SquealEnv db r) => r -> TxM r a -> IO a
+ephemerally_ = unsafeRunSquealTransaction @db Squeal.ephemerally_

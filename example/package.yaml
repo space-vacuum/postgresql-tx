@@ -14,6 +14,7 @@ ghc-options:
 
 dependencies:
 - base >= 4.7 && < 5
+- bytestring
 - monad-logger
 - postgresql-libpq
 - postgresql-query
@@ -22,6 +23,7 @@ dependencies:
 - postgresql-tx-query
 - postgresql-tx-simple
 - postgresql-tx-squeal
+- postgresql-tx-squeal-compat-simple
 - squeal-postgresql
 
 tests:
