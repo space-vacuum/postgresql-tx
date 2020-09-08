@@ -7,7 +7,9 @@
 {-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
@@ -20,9 +22,11 @@ module Database.PostgreSQL.Tx.Internal
     module Database.PostgreSQL.Tx.Internal
   ) where
 
+import Control.Exception (Exception(toException), SomeException, catch, throwIO)
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Control.Monad.Trans.Reader (ReaderT(ReaderT, runReaderT))
 import Data.Kind (Constraint)
+import Data.String (IsString)
 import GHC.TypeLits (ErrorMessage(Text), TypeError)
 
 -- | The transaction monad. Unifies all database integrations, regardless of
@@ -135,6 +139,65 @@ unsafeLookupTxEnvIO r = unsafeRunTxM r askTxEnv
 type family TxEnvs (xs :: [*]) r :: Constraint where
   TxEnvs '[] r = ()
   TxEnvs (x ': xs) r = (TxEnv x r, TxEnvs xs r)
+
+-- | Throw an exception.
+--
+-- @since 0.2.0.0
+throwExceptionTx :: (Exception e) => e -> TxM r a
+throwExceptionTx = unsafeRunIOInTxM . throwIO
+
+-- | Catch an exception and map it to another exception type before rethrowing.
+--
+-- @since 0.2.0.0
+mapExceptionTx
+  :: (Exception e, Exception e')
+  => (e -> Maybe e')
+  -> TxM r a
+  -> TxM r a
+mapExceptionTx mapper action = do
+  unsafeWithRunInIOTxM \run -> do
+    catch (run action) \ex -> do
+      case mapper ex of
+        Nothing -> throwIO ex
+        Just ex' -> throwIO ex'
+
+data TxException = TxException
+  { errorType :: TxErrorType
+  , cause :: SomeException
+  } deriving stock (Show)
+
+instance Exception TxException
+
+data TxErrorType =
+    TxSerializationFailure
+  | TxDeadlockDetected
+  | TxOtherError
+    deriving stock (Show, Eq)
+
+fromSqlState :: (IsString s, Eq s) => Maybe s -> TxErrorType
+fromSqlState = \case
+  Just "40001" -> TxSerializationFailure
+  Just "40P01" -> TxDeadlockDetected
+  _ -> TxOtherError
+
+unsafeMkTxException
+  :: ( Exception e
+     , IsString s
+     , Eq s
+     )
+  => (e -> Maybe s)
+  -> e -> TxException
+unsafeMkTxException f = unsafeMkTxException' (fromSqlState . f)
+
+unsafeMkTxException'
+  :: (Exception e)
+  => (e -> TxErrorType)
+  -> e -> TxException
+unsafeMkTxException' f e =
+  TxException
+    { errorType = f e
+    , cause = toException e
+    }
 
 -- $disclaimer
 --

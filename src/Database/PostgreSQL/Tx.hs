@@ -14,31 +14,11 @@ module Database.PostgreSQL.Tx
     -- ** Exceptions
   , throwExceptionTx
   , mapExceptionTx
+  , TxException(..)
+  , TxErrorType(..)
   ) where
 
-import Control.Exception (Exception, catch, throwIO)
 import Database.PostgreSQL.Tx.Internal
-
--- | Throw an exception.
---
--- @since 0.2.0.0
-throwExceptionTx :: (Exception e) => e -> TxM r a
-throwExceptionTx = unsafeRunIOInTxM . throwIO
-
--- | Catch an exception and map it to another exception type before rethrowing.
---
--- @since 0.2.0.0
-mapExceptionTx
-  :: (Exception e, Exception e')
-  => (e -> Maybe e')
-  -> TxM r a
-  -> TxM r a
-mapExceptionTx mapper action = do
-  unsafeWithRunInIOTxM \run -> do
-    catch (run action) \ex -> do
-      case mapper ex of
-        Nothing -> throwIO ex
-        Just ex' -> throwIO ex'
 
 -- $intro
 --

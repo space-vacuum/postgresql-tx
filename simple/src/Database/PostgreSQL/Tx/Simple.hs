@@ -24,6 +24,12 @@ withTransaction = unsafeRunTransaction Simple.withTransaction
 withTransactionLevel :: (PgSimpleEnv r) => Simple.IsolationLevel -> r -> TxM r a -> IO a
 withTransactionLevel = unsafeRunTransaction . Simple.withTransactionLevel
 
+-- | Analogue of 'Simple.withTransactionMode'.
+--
+-- @since 0.2.0.0
+withTransactionMode :: (PgSimpleEnv r) => Simple.TransactionMode -> r -> TxM r a -> IO a
+withTransactionMode = unsafeRunTransaction . Simple.withTransactionMode
+
 -- | Analogue of 'Simple.query'
 --
 -- @since 0.1.0.0

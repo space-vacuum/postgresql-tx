@@ -29,9 +29,11 @@ dependencies:
 
 tests:
   postgresql-tx-example-tests:
-    main: Test.hs
+    main: Driver.hs
     source-dirs:
     - test
+    build-tools:
+    - hspec-discover
     ghc-options:
     - -threaded
     - -rtsopts

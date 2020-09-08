@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -20,9 +21,9 @@ module Database.PostgreSQL.Tx.Squeal.Internal
 
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Data.Kind (Constraint)
-import Database.PostgreSQL.Tx (TxEnv, TxM, askTxEnv)
+import Database.PostgreSQL.Tx (TxEnv, TxException, TxM, askTxEnv, mapExceptionTx)
 import Database.PostgreSQL.Tx.Squeal.Internal.Reexport
-import Database.PostgreSQL.Tx.Unsafe (unsafeLookupTxEnvIO, unsafeRunIOInTxM, unsafeRunTxM)
+import Database.PostgreSQL.Tx.Unsafe (unsafeLookupTxEnvIO, unsafeMkTxException, unsafeRunIOInTxM, unsafeRunTxM)
 import GHC.TypeLits (ErrorMessage(Text), TypeError)
 import qualified Database.PostgreSQL.LibPQ as LibPQ
 
@@ -93,10 +94,16 @@ newtype SquealConnection =
 mkSquealConnection :: LibPQ.Connection -> SquealConnection
 mkSquealConnection conn = UnsafeSquealConnection (pure conn)
 
+fromSquealException :: SquealException -> TxException
+fromSquealException =
+  unsafeMkTxException \case
+    SQLException SQLState { sqlStateCode } -> Just sqlStateCode
+    _ -> Nothing
+
 unsafeSquealIOTxM
   :: PQ db db IO a
   -> SquealTxM db a
-unsafeSquealIOTxM (PQ f) = SquealTxM do
+unsafeSquealIOTxM (PQ f) = SquealTxM $ mapExceptionTx (Just . fromSquealException) do
   UnsafeSquealConnection { unsafeGetLibPQConnection } <- askTxEnv
   unsafeRunIOInTxM do
     conn <- unsafeGetLibPQConnection
