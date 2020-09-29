@@ -17,6 +17,9 @@ extra-deps:
 # }}}
 
 # {{{ squeal
-- squeal-postgresql-0.6.0.2
-- free-categories-0.2.0.0
+- git: https://github.com/morphismtech/squeal
+  commit: 7edd3867fa7f3d4c5116982e43e76ff2eaf04554
+  subdirs:
+    - squeal-postgresql
+- free-categories-0.2.0.2
 # }}}
