@@ -1,0 +1,47 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: e280370d4d83f3068fc93b99c138cd60ab047318dfd7dc7f721f04398434d9a5
+
+name:           postgresql-tx-persistent
+version:        0.0.0.0
+synopsis:       postgresql-tx interfacing for use with persistent.
+description:    Please see the README on GitHub at <https://github.com/simspace/postgresql-tx#readme>
+category:       Database
+homepage:       https://github.com/simspace/postgresql-tx#readme
+bug-reports:    https://github.com/simspace/postgresql-tx/issues
+author:         Cary Robbins
+maintainer:     carymrobbins@gmail.com
+copyright:      2020 SimSpace
+license:        BSD3
+license-file:   LICENSE.md
+build-type:     Simple
+extra-source-files:
+    CHANGELOG.md
+    LICENSE.md
+    package.yaml
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/simspace/postgresql-tx
+
+library
+  exposed-modules:
+      Database.PostgreSQL.Tx.Persistent
+  other-modules:
+      Paths_postgresql_tx_persistent
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      base >=4.7 && <5
+    , monad-logger >=0.3.32 && <0.4
+    , mtl >=2.2.2 && <2.3
+    , persistent >=2.10.5.2 && <2.11
+    , persistent-postgresql >=2.10.1.2 && <2.11
+    , postgresql-tx >=0.2.0.0 && <0.3
+  default-language: Haskell2010
