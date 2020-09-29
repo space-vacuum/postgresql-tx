@@ -1,0 +1,58 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: ead9cc273f83a052b59f92e795f67f82419207879dd633b48d5d538595368758
+
+name:           postgresql-tx-example
+version:        0.0.0.0
+synopsis:       A safe transaction monad for use with various PostgreSQL Haskell libraries.
+description:    Please see the README on GitHub at <https://github.com/simspace/postgresql-tx#readme>
+category:       Database
+homepage:       https://github.com/simspace/postgresql-tx#readme
+bug-reports:    https://github.com/simspace/postgresql-tx/issues
+author:         Cary Robbins
+maintainer:     carymrobbins@gmail.com
+copyright:      2020 SimSpace
+license:        BSD3
+build-type:     Simple
+
+source-repository head
+  type: git
+  location: https://github.com/simspace/postgresql-tx
+
+test-suite postgresql-tx-example-tests
+  type: exitcode-stdio-1.0
+  main-is: Test.hs
+  other-modules:
+      Example.PgQuery
+      Example.PgQuery.Internal.DB
+      Example.PgQuery.Internal.Queries
+      Example.PgSimple
+      Example.PgSimple.Internal.DB
+      Example.PgSimple.Internal.Queries
+      Example.Squeal
+      Example.Squeal.Internal.DB
+      Example.Squeal.Internal.Queries
+      Example.Squeal.Internal.Schema
+      Paths_postgresql_tx_example
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -threaded -rtsopts "-with-rtsopts=-N -T"
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , hspec
+    , monad-logger
+    , postgresql-libpq
+    , postgresql-query
+    , postgresql-simple
+    , postgresql-tx
+    , postgresql-tx-query
+    , postgresql-tx-simple
+    , postgresql-tx-squeal
+    , postgresql-tx-squeal-compat-simple
+    , squeal-postgresql
+  default-language: Haskell2010
