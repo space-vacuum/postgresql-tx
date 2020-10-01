@@ -45,5 +45,5 @@ library
     , postgresql-libpq >=0.9.4.2 && <0.10
     , postgresql-tx >=0.2.0.0 && <0.3
     , records-sop >=0.1.0.3 && <0.2
-    , squeal-postgresql >=0.7.0.0 && <0.8
+    , squeal-postgresql >=0.7.0.1 && <0.8
   default-language: Haskell2010
