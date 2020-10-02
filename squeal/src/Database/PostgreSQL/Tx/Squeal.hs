@@ -69,8 +69,8 @@ resultStatus = unsafeSquealIOTxM1 Squeal.resultStatus
 
 -- | Analogue of 'Squeal.okResult'.
 --
--- @since 0.1.0.0
-okResult :: K LibPQ.Result row -> SquealTxM db ()
+-- @since 0.2.0.0
+okResult :: Result y -> SquealTxM db ()
 okResult = unsafeSquealIOTxM1 Squeal.okResult
 
 -- | Analogue of 'Squeal.resultErrorMessage'.
