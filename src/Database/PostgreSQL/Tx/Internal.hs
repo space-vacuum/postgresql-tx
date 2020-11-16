@@ -1,6 +1,7 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FunctionalDependencies #-}
@@ -38,7 +39,8 @@ newtype TxM r a = UnsafeTxM
     --
     -- @since 0.2.0.0
     unsafeUnTxM :: ReaderT r IO a
-  } deriving newtype (Functor, Applicative, Monad)
+  } deriving newtype (Functor, Applicative, Monad, MonadFail)
+    deriving (Semigroup, Monoid) via (r -> IO a)
 
 -- | Run an 'IO' action in 'TxM'. Use this function with care - arbitrary 'IO'
 -- should only be run within a transaction when truly necessary.
