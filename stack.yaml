@@ -11,6 +11,8 @@ packages:
 - squeal/compat/simple
 
 extra-deps:
+- postgresql-simple-0.6.3
+
 # {{{ postgresql-query
 - git: https://github.com/Simspace/postgresql-query
   commit: b45346d7af5a5de6f083349ac1fcee830afe4112

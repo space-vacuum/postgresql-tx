@@ -5,6 +5,13 @@
 
 packages:
 - completed:
+    hackage: postgresql-simple-0.6.3@sha256:d42d397fc8cba02ee24d1138e5c7c2f6c38803cf6cf0ec5afae4334e5f4f3d5c,5164
+    pantry-tree:
+      size: 4139
+      sha256: 552c3236396547af44247cc8527a18427b543e68f6d0efbc42e26cd11e153c59
+  original:
+    hackage: postgresql-simple-0.6.3
+- completed:
     cabal-file:
       size: 4959
       sha256: 8891f4eea893607c6e500d73f5f095e11f5bc7c0c20467e6b9040a3e1be039a5

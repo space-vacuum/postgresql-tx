@@ -1,6 +1,7 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
@@ -16,8 +17,9 @@ module Database.PostgreSQL.Tx.Squeal
   , module Database.PostgreSQL.Tx.Squeal.Internal.Reexport
   ) where
 
+import Control.Exception (Exception)
 import Data.ByteString (ByteString)
-import Database.PostgreSQL.Tx (TxM)
+import Database.PostgreSQL.Tx (TxM, shouldRetryTx)
 import Database.PostgreSQL.Tx.Squeal.Internal
 import Database.PostgreSQL.Tx.Squeal.Internal.Reexport
 import qualified Database.PostgreSQL.LibPQ as LibPQ
@@ -245,12 +247,24 @@ transactionally m = unsafeRunSquealTransaction (Squeal.transactionally m)
 transactionally_ :: (SquealEnv r) => r -> TxM r a -> IO a
 transactionally_ = unsafeRunSquealTransaction Squeal.transactionally_
 
--- TODO: Removed for now until we provide a retry mechanism.
--- -- | Analogue of 'Squeal.transactionallyRetry'.
--- --
--- -- @since 0.1.0.0
--- transactionallyRetry :: (SquealEnv r) => TransactionMode -> r -> TxM r a -> IO a
--- transactionallyRetry m = unsafeRunSquealTransaction (Squeal.transactionallyRetry m)
+transactionallySerializable :: (SquealEnv r) => r -> TxM r a -> IO a
+transactionallySerializable =
+  transactionallyRetry mode shouldRetryTx
+  where
+  mode =
+    TransactionMode
+      Serializable
+      ReadWrite
+      NotDeferrable
+
+-- | Analogue of 'Squeal.transactionallyRetry'.
+--
+-- @since 0.2.0.0
+transactionallyRetry
+  :: (SquealEnv r, Exception e)
+  => TransactionMode -> (e -> Bool) -> r -> TxM r a -> IO a
+transactionallyRetry m shouldRetry =
+  unsafeRunSquealTransaction (transactionallyRetry' m shouldRetry)
 
 -- | Analogue of 'Squeal.ephemerally'.
 --

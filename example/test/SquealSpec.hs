@@ -7,10 +7,10 @@
 module SquealSpec where
 
 import Database.PostgreSQL.Tx.Squeal
-  ( AccessMode(ReadWrite), DeferrableMode(NotDeferrable), IsolationLevel(Serializable)
-  , Manipulation(UnsafeManipulation), NullType(NotNull), PGType(PGtext), SquealTxM'(fromSquealTxM)
-  , TransactionMode(TransactionMode), SquealEnv, SquealM, manipulateParams_, transactionally
-  , transactionally_
+  ( AccessMode(ReadWrite), DeferrableMode(NotDeferrable), IsolationLevel(RepeatableRead)
+  , Manipulation(UnsafeManipulation), NullType(NotNull, Null), PGType(PGtext)
+  , SquealTxM'(fromSquealTxM), TransactionMode(TransactionMode), SquealEnv, SquealM
+  , manipulateParams_, transactionally, transactionallySerializable, transactionally_
   )
 import Example.Squeal (Schemas)
 import Test.Hspec (Spec)
@@ -25,15 +25,15 @@ squeal = Backend
 
   , withTransaction = transactionally_
   , withTransactionMode = transactionally
+  , withTransactionSerializable = transactionallySerializable
 
-  , transactionMode'Serializable = TransactionMode Serializable ReadWrite NotDeferrable
+  , transactionMode'RepeatableRead = TransactionMode RepeatableRead ReadWrite NotDeferrable
   }
 
-raiseException' :: String -> SquealM ()
-raiseException' errCode = fromSquealTxM do
-  let errMsg = "Raising exception via squeal-postgresql with error code '" <> errCode <> "'"
+raiseException' :: String -> Maybe String -> SquealM ()
+raiseException' errMsg errCode = fromSquealTxM do
   manipulateParams_
     @Schemas
-    @'[ 'NotNull 'PGtext, 'NotNull 'PGtext ]
+    @'[ 'NotNull 'PGtext, 'Null 'PGtext ]
     (UnsafeManipulation "select raise_exception($1, $2)")
     (errMsg, errCode)

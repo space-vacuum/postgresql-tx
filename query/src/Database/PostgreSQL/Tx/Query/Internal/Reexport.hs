@@ -13,6 +13,8 @@ import Database.PostgreSQL.Query as X hiding
   ( pgWithSavepoint
   , pgWithTransaction
   , pgWithTransactionMode
+  , pgWithTransactionModeRetry
+  , pgWithTransactionSerializable
   , pgQuery
   , pgQueryWithMasker
   , pgExecute

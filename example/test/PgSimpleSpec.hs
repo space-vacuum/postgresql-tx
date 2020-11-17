@@ -7,7 +7,7 @@
 module PgSimpleSpec where
 
 import Data.Functor (void)
-import Database.PostgreSQL.Simple.Transaction (IsolationLevel(Serializable), ReadWriteMode(ReadWrite), TransactionMode(TransactionMode))
+import Database.PostgreSQL.Simple.Transaction (IsolationLevel(RepeatableRead), ReadWriteMode(ReadWrite), TransactionMode(TransactionMode))
 import Database.PostgreSQL.Tx.Simple (PgSimpleEnv, execute)
 import Test.Hspec (Spec)
 import Test.Infra (Backend(..), testBackend)
@@ -22,11 +22,11 @@ postgresqlSimple = Backend
 
   , withTransaction = Tx.Simple.withTransaction
   , withTransactionMode = Tx.Simple.withTransactionMode
+  , withTransactionSerializable = Tx.Simple.withTransactionSerializable
 
-  , transactionMode'Serializable = TransactionMode Serializable ReadWrite
+  , transactionMode'RepeatableRead = TransactionMode RepeatableRead ReadWrite
   }
 
-raiseException' :: String -> Tx.Simple.PgSimpleM ()
-raiseException' errCode = do
-  let errMsg = "Raising exception via postgresql-simple with error code '" <> errCode <> "'"
+raiseException' :: String -> Maybe String -> Tx.Simple.PgSimpleM ()
+raiseException' errMsg errCode = do
   void $ execute "select raise_exception(?, ?)" (errMsg, errCode)

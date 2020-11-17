@@ -9,19 +9,24 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
+{-# OPTIONS_GHC -ddump-minimal-imports -dumpdir /tmp #-}
 module Test.Infra where
 
 import Control.Exception (try)
 import Control.Monad (void)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Logger (LoggingT(LoggingT), runStderrLoggingT)
+import Data.IORef (atomicModifyIORef', newIORef, readIORef)
 import Data.Proxy (Proxy(Proxy))
-import Database.PostgreSQL.Tx (TxErrorType(TxDeadlockDetected, TxSerializationFailure), TxException(TxException), TxM)
+import Database.PostgreSQL.Tx
+  ( TxErrorType(TxDeadlockDetected, TxOtherError, TxSerializationFailure), TxException(TxException)
+  , TxM, throwExceptionTx
+  )
 import Database.PostgreSQL.Tx.HEnv (HEnv)
 import Database.PostgreSQL.Tx.Query (Logger)
 import Database.PostgreSQL.Tx.Squeal (SquealConnection)
 import GHC.TypeLits (KnownSymbol, Symbol, symbolVal)
-import Test.Hspec
+import Test.Hspec (HasCallStack, Spec, describe, expectationFailure, it, pendingWith, shouldBe, shouldReturn)
 import qualified Database.PostgreSQL.Simple as PG.Simple
 import qualified Database.PostgreSQL.Tx as Tx
 import qualified Database.PostgreSQL.Tx.HEnv as HEnv
@@ -43,21 +48,55 @@ testBackend' Backend {..} extraTests = do
     generatedTests
     extraTests
   where
+  raiseErrCode errCode = do
+    raiseException
+      ("Raising exception via " <> symbolVal (Proxy @backend)
+        <> " with error code '" <> errCode <> "'")
+      (Just errCode)
+
   generatedTests = do
     describe "transaction runners" do
       it "withTransaction" do
         demoTest (withTransaction)
-      it "withTransactionMode Serializable" do
-        demoTest (withTransactionMode transactionMode'Serializable)
+      it "withTransactionMode RepeatableRead" do
+        demoTest (withTransactionMode transactionMode'RepeatableRead)
+      describe "withTransactionSerializable" do
+        it "retries when appropriate" $ withAppEnv \appEnv -> do
+          counter <- newIORef (0 :: Int)
+          withTransactionSerializable appEnv do
+            -- Increment our counter and get its new value.
+            n <- Tx.Unsafe.unsafeRunIOInTxM do
+              atomicModifyIORef' counter \i -> let j = i + 1 in (j, j)
+            case n of
+              0 -> raiseErrCode "serialization_failure"
+              1 -> raiseErrCode "deadlock_detected"
+              _ -> pure ()
+          readIORef counter `shouldReturn` 2
+        it "does not retry when not appropriate" $ withAppEnv \appEnv -> do
+          expectTxError (TxOtherError (Just "23503")) do
+            withTransactionSerializable appEnv do
+              raiseErrCode "foreign_key_violation"
     describe "TxException" do
       it "wraps serialization_failure" $ withAppEnv \appEnv -> do
         expectTxError TxSerializationFailure do
-          Tx.Unsafe.unsafeRunTxM appEnv do
-            raiseException "serialization_failure"
+          withTransaction appEnv do
+            raiseErrCode "serialization_failure"
       it "wraps deadlock_detected" $ withAppEnv \appEnv -> do
         expectTxError TxDeadlockDetected do
-          Tx.Unsafe.unsafeRunTxM appEnv do
-            raiseException "deadlock_detected"
+          withTransaction appEnv do
+            raiseErrCode "deadlock_detected"
+      it "wraps other applicable others" $ withAppEnv \appEnv -> do
+        expectTxError (TxOtherError (Just "23514")) do
+          withTransaction appEnv do
+            raiseErrCode "check_violation"
+      it "wraps applicable errors with no specified error code" $ withAppEnv \appEnv -> do
+        expectTxError (TxOtherError (Just "P0001")) do
+          withTransaction appEnv do
+            raiseException "oh noes" Nothing
+      it "doesn't wrap inapplicable exceptions" $ withAppEnv \appEnv -> do
+        let e = userError "boom"
+        let go = void $ withTransaction appEnv $ throwExceptionTx e
+        try go `shouldReturn` Left e
 
 demoTest :: (forall a. AppEnv -> AppM a -> IO a) -> IO ()
 demoTest runTransaction = withAppEnv \appEnv -> do
@@ -124,7 +163,11 @@ withAppEnv f = do
       void $ Tx.Query.pgExecute [Tx.Query.sqlExp|
         create function raise_exception(message text, error_code text) returns void as $$
           begin
-            raise exception '%', message using errcode = error_code;
+            if error_code is null then
+              raise exception '%', message;
+            else
+              raise exception '%', message using errcode = error_code;
+            end if;
           end;
         $$ language plpgsql;
       |]
@@ -150,16 +193,29 @@ toLogger :: (LoggingT IO () -> IO ()) -> Logger
 toLogger f loc src lvl msg =
   f $ LoggingT \logger -> liftIO $ logger loc src lvl msg
 
+-- | Can be used in a field definition for 'Backend' in the event
+-- that the backend does not yet support some feature without
+-- breaking the test suite.
+throwPendingIO :: String -> IO a
+throwPendingIO msg = pendingWith msg >> error "can't get here"
+
+-- | Same as 'throwPendingIO' except works for 'TxM'.
+throwPendingTx :: String -> TxM r a
+throwPendingTx = Tx.Unsafe.unsafeRunIOInTxM . throwPendingIO
+
 -- | Generalized interface for testing a @postgresql-tx@ backend.
 data Backend (backend :: Symbol) r tm = Backend
-  { -- | Raises an exception from postgresql with the given @errcode@.
-    raiseException :: String -> TxM r ()
+  { -- | Raises an exception from postgresql with the given @message@ and
+    -- optional @errcode@.
+    raiseException :: String -> Maybe String -> TxM r ()
 
     -- | Runs a transaction at the default mode.
   , withTransaction :: forall a. r -> TxM r a -> IO a
     -- | Runs a transaction at the specified mode @tm@.
   , withTransactionMode :: forall a. tm -> r -> TxM r a -> IO a
+    -- | Runs a transaction at @serializable@ with retry.
+  , withTransactionSerializable :: forall a. r -> TxM r a -> IO a
 
-    -- | A transaction mode of @serializable@.
-  , transactionMode'Serializable :: tm
+    -- | A transaction mode of @repeatable read@.
+  , transactionMode'RepeatableRead :: tm
   }

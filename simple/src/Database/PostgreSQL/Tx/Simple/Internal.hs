@@ -16,6 +16,7 @@ module Database.PostgreSQL.Tx.Simple.Internal
 import Data.Kind (Constraint)
 import Database.PostgreSQL.Tx (TxEnv, TxException, TxM, askTxEnv, mapExceptionTx)
 import Database.PostgreSQL.Tx.Unsafe (unsafeMkTxException, unsafeMksTxM, unsafeRunIOInTxM, unsafeRunTxM)
+import qualified Data.ByteString.Char8 as Char8
 import qualified Database.PostgreSQL.Simple as Simple
 
 -- | Runtime environment needed to run @postgresql-simple@ via @postgresql-tx@.
@@ -38,7 +39,7 @@ unsafeRunTransaction f r x = do
     unsafeRunIOInTxM $ f conn (unsafeRunTxM r x)
 
 fromSqlError :: Simple.SqlError -> TxException
-fromSqlError = unsafeMkTxException (Just . Simple.sqlState)
+fromSqlError = unsafeMkTxException (Just . Char8.unpack . Simple.sqlState)
 
 unsafeFromPgSimple
   :: (Simple.Connection -> IO x)

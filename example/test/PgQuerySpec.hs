@@ -5,8 +5,9 @@ module PgQuerySpec where
 
 import Data.Functor (void)
 import Database.PostgreSQL.Tx.Query
-  ( IsolationLevel(Serializable), ReadWriteMode(ReadWrite), TransactionMode(TransactionMode)
-  , PgQueryEnv, PgQueryM, pgExecute, pgWithTransaction, pgWithTransactionMode, sqlExp
+  ( IsolationLevel(RepeatableRead), ReadWriteMode(ReadWrite), TransactionMode(TransactionMode)
+  , PgQueryEnv, PgQueryM, pgExecute, pgWithTransaction, pgWithTransactionMode
+  , pgWithTransactionSerializable, sqlExp
   )
 import Test.Hspec (Spec)
 import Test.Infra (Backend(..), testBackend)
@@ -20,13 +21,13 @@ postgresqlQuery = Backend
 
   , withTransaction = pgWithTransaction
   , withTransactionMode = pgWithTransactionMode
+  , withTransactionSerializable = pgWithTransactionSerializable
 
-  , transactionMode'Serializable = TransactionMode Serializable ReadWrite
+  , transactionMode'RepeatableRead = TransactionMode RepeatableRead ReadWrite
   }
 
-raiseException' :: String -> PgQueryM ()
-raiseException' errCode = do
-  let errMsg = "Raising exception via postgresql-query with error code '" <> errCode <> "'"
+raiseException' :: String -> Maybe String -> PgQueryM ()
+raiseException' errMsg errCode = do
   void $ pgExecute [sqlExp|
     select raise_exception(#{errMsg}, #{errCode})
   |]

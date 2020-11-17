@@ -6,29 +6,60 @@ module Database.PostgreSQL.Tx.Simple
   , module Database.PostgreSQL.Tx.Simple
   ) where
 
+import Control.Exception (Exception)
 import Data.Int (Int64)
-import Database.PostgreSQL.Tx (TxM)
+import Database.PostgreSQL.Tx (TxM, shouldRetryTx)
 import Database.PostgreSQL.Tx.Simple.Internal
+import GHC.Stack (HasCallStack)
 import qualified Database.PostgreSQL.Simple as Simple
 import qualified Database.PostgreSQL.Simple.Transaction as Simple
 
 -- | Analogue of 'Simple.withTransaction'.
 --
 -- @since 0.1.0.0
-withTransaction :: (PgSimpleEnv r) => r -> TxM r a -> IO a
+withTransaction
+  :: (PgSimpleEnv r, HasCallStack)
+  => r -> (HasCallStack => TxM r a) -> IO a
 withTransaction = unsafeRunTransaction Simple.withTransaction
 
 -- | Analogue of 'Simple.withTransactionLevel'.
 --
 -- @since 0.1.0.0
-withTransactionLevel :: (PgSimpleEnv r) => Simple.IsolationLevel -> r -> TxM r a -> IO a
+withTransactionLevel
+  :: (PgSimpleEnv r, HasCallStack)
+  => Simple.IsolationLevel -> r -> (HasCallStack => TxM r a) -> IO a
 withTransactionLevel = unsafeRunTransaction . Simple.withTransactionLevel
 
 -- | Analogue of 'Simple.withTransactionMode'.
 --
 -- @since 0.2.0.0
-withTransactionMode :: (PgSimpleEnv r) => Simple.TransactionMode -> r -> TxM r a -> IO a
+withTransactionMode
+  :: (PgSimpleEnv r, HasCallStack)
+  => Simple.TransactionMode -> r -> (HasCallStack => TxM r a) -> IO a
 withTransactionMode = unsafeRunTransaction . Simple.withTransactionMode
+
+-- | Analogue of 'Simple.withTransactionSerializable'. Unlike
+-- @postgresql-simple@, this one uses 'shouldRetryTx' to also retry
+-- on @deadlock_detected@.
+--
+-- @since 0.2.0.0
+withTransactionSerializable
+  :: (PgSimpleEnv r, HasCallStack)
+  => r -> (HasCallStack => TxM r a) -> IO a
+withTransactionSerializable =
+  withTransactionModeRetry mode shouldRetryTx
+  where
+  mode = Simple.TransactionMode Simple.Serializable Simple.ReadWrite
+
+-- | Analogue of 'Simple.withTransactionModeRetry'.
+-- You should generally prefer 'withTransactionSerializable'.
+--
+-- @since 0.2.0.0
+withTransactionModeRetry
+  :: (Exception e, PgSimpleEnv r, HasCallStack)
+  => Simple.TransactionMode -> (e -> Bool) -> r -> (HasCallStack => TxM r a) -> IO a
+withTransactionModeRetry mode shouldRetry =
+  unsafeRunTransaction $ Simple.withTransactionModeRetry' mode shouldRetry
 
 -- | Analogue of 'Simple.query'
 --

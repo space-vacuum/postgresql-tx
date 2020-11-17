@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ead9cc273f83a052b59f92e795f67f82419207879dd633b48d5d538595368758
+-- hash: 63dc040f3a77b23a293a966e4e8c524dd17bd50ad4cbb292b94c18b92d9ab8ef
 
 name:           postgresql-tx-example
 version:        0.0.0.0
@@ -25,7 +25,7 @@ source-repository head
 
 test-suite postgresql-tx-example-tests
   type: exitcode-stdio-1.0
-  main-is: Test.hs
+  main-is: Driver.hs
   other-modules:
       Example.PgQuery
       Example.PgQuery.Internal.DB
@@ -37,10 +37,16 @@ test-suite postgresql-tx-example-tests
       Example.Squeal.Internal.DB
       Example.Squeal.Internal.Queries
       Example.Squeal.Internal.Schema
+      PgQuerySpec
+      PgSimpleSpec
+      SquealSpec
+      Test.Infra
       Paths_postgresql_tx_example
   hs-source-dirs:
       test
   ghc-options: -Wall -threaded -rtsopts "-with-rtsopts=-N -T"
+  build-tool-depends:
+      hspec-discover:hspec-discover
   build-depends:
       base >=4.7 && <5
     , bytestring

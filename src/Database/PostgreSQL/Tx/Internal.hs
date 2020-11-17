@@ -22,11 +22,10 @@ module Database.PostgreSQL.Tx.Internal
     module Database.PostgreSQL.Tx.Internal
   ) where
 
-import Control.Exception (Exception(toException), SomeException, catch, throwIO)
+import Control.Exception (Exception(fromException, toException), SomeException, catch, throwIO)
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Control.Monad.Trans.Reader (ReaderT(ReaderT, runReaderT))
 import Data.Kind (Constraint)
-import Data.String (IsString)
 import GHC.TypeLits (ErrorMessage(Text), TypeError)
 
 -- | The transaction monad. Unifies all database integrations, regardless of
@@ -171,22 +170,27 @@ instance Exception TxException
 data TxErrorType =
     TxSerializationFailure
   | TxDeadlockDetected
-  | TxOtherError
+  | TxOtherError (Maybe String) -- ^ PostgreSQL @errcode@, if applicable.
     deriving stock (Show, Eq)
 
-fromSqlState :: (IsString s, Eq s) => Maybe s -> TxErrorType
+shouldRetryTx :: TxException -> Bool
+shouldRetryTx e =
+  errorType e `elem`
+    [ TxSerializationFailure
+    , TxDeadlockDetected
+    ]
+
+shouldRetryTx' :: (Exception e) => e -> Bool
+shouldRetryTx' = any shouldRetryTx . fromException . toException
+
+fromSqlState :: Maybe String -> TxErrorType
 fromSqlState = \case
   Just "40001" -> TxSerializationFailure
   Just "40P01" -> TxDeadlockDetected
-  _ -> TxOtherError
+  sqlState -> TxOtherError sqlState
 
 unsafeMkTxException
-  :: ( Exception e
-     , IsString s
-     , Eq s
-     )
-  => (e -> Maybe s)
-  -> e -> TxException
+  :: (Exception e) => (e -> Maybe String) -> e -> TxException
 unsafeMkTxException f = unsafeMkTxException' (fromSqlState . f)
 
 unsafeMkTxException'

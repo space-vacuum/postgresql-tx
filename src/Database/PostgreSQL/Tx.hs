@@ -16,6 +16,8 @@ module Database.PostgreSQL.Tx
   , mapExceptionTx
   , TxException(..)
   , TxErrorType(..)
+  , shouldRetryTx
+  , shouldRetryTx'
   ) where
 
 import Database.PostgreSQL.Tx.Internal
