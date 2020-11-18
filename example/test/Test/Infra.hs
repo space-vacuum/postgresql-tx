@@ -9,7 +9,6 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
-{-# OPTIONS_GHC -ddump-minimal-imports -dumpdir /tmp #-}
 module Test.Infra where
 
 import Control.Exception (try)
@@ -85,7 +84,7 @@ testBackend' Backend {..} extraTests = do
         expectTxError TxDeadlockDetected do
           withTransaction appEnv do
             raiseErrCode "deadlock_detected"
-      it "wraps other applicable others" $ withAppEnv \appEnv -> do
+      it "wraps other applicable errors" $ withAppEnv \appEnv -> do
         expectTxError (TxOtherError (Just "23514")) do
           withTransaction appEnv do
             raiseErrCode "check_violation"

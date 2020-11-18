@@ -247,6 +247,13 @@ transactionally m = unsafeRunSquealTransaction (Squeal.transactionally m)
 transactionally_ :: (SquealEnv r) => r -> TxM r a -> IO a
 transactionally_ = unsafeRunSquealTransaction Squeal.transactionally_
 
+-- | Specialization of 'transactionallyRetry' which uses 'Serializable'
+-- and 'shouldRetryTx' to automatically retry the transaction on
+-- @serialization_failure@ or @deadlock_detected@.
+--
+-- Note that any 'IO' that occurs inside the 'TxM' may be executed multiple times.
+--
+-- @since 0.2.0.0
 transactionallySerializable :: (SquealEnv r) => r -> TxM r a -> IO a
 transactionallySerializable =
   transactionallyRetry mode shouldRetryTx
@@ -258,6 +265,8 @@ transactionallySerializable =
       NotDeferrable
 
 -- | Analogue of 'Squeal.transactionallyRetry'.
+--
+-- Note that any 'IO' that occurs inside the 'TxM' may be executed multiple times.
 --
 -- @since 0.2.0.0
 transactionallyRetry

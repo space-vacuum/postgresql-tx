@@ -38,9 +38,11 @@ withTransactionMode
   => Simple.TransactionMode -> r -> (HasCallStack => TxM r a) -> IO a
 withTransactionMode = unsafeRunTransaction . Simple.withTransactionMode
 
--- | Analogue of 'Simple.withTransactionSerializable'. Unlike
--- @postgresql-simple@, this one uses 'shouldRetryTx' to also retry
--- on @deadlock_detected@.
+-- | Analogue of 'Simple.withTransactionSerializable'.
+-- Unlike @postgresql-simple@, uses 'shouldRetryTx' to also retry
+-- on @deadlock_detected@, not just @serialization_failure@.
+--
+-- Note that any 'IO' that occurs inside the 'TxM' may be executed multiple times.
 --
 -- @since 0.2.0.0
 withTransactionSerializable
@@ -53,6 +55,8 @@ withTransactionSerializable =
 
 -- | Analogue of 'Simple.withTransactionModeRetry'.
 -- You should generally prefer 'withTransactionSerializable'.
+--
+-- Note that any 'IO' that occurs inside the 'TxM' may be executed multiple times.
 --
 -- @since 0.2.0.0
 withTransactionModeRetry

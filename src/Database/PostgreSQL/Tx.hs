@@ -17,7 +17,6 @@ module Database.PostgreSQL.Tx
   , TxException(..)
   , TxErrorType(..)
   , shouldRetryTx
-  , shouldRetryTx'
   ) where
 
 import Database.PostgreSQL.Tx.Internal

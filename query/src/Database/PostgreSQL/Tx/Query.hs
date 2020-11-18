@@ -34,9 +34,13 @@ pgWithTransactionMode
   => Simple.TransactionMode -> r -> (HasCallStack => TxM r a) -> IO a
 pgWithTransactionMode m = unsafeRunPgQueryTransaction (Query.pgWithTransactionMode m)
 
--- | Analogue of 'Query.pgWithTransactionModeRetry'.
+-- | Analogue of 'Query.pgWithTransactionSerializable'
+-- Unlike @postgresql-query@, uses 'shouldRetryTx' to also retry
+-- on @deadlock_detected@, not just @serialization_failure@.
 --
--- @since 0.1.0.0
+-- Note that any 'IO' that occurs inside the 'TxM' may be executed multiple times.
+--
+-- @since 0.2.0.0
 pgWithTransactionSerializable
   :: (PgQueryEnv r, HasCallStack)
   => r -> (HasCallStack => TxM r a) -> IO a
@@ -45,7 +49,9 @@ pgWithTransactionSerializable = Tx.Simple.withTransactionSerializable
 -- | Analogue of 'Query.pgWithTransactionModeRetry'.
 -- You should generally prefer 'pgWithTransactionSerializable'.
 --
--- @since 0.1.0.0
+-- Note that any 'IO' that occurs inside the 'TxM' may be executed multiple times.
+--
+-- @since 0.2.0.0
 pgWithTransactionModeRetry
   :: (PgQueryEnv r, Exception e, HasCallStack)
   => Simple.TransactionMode -> (e -> Bool) -> r -> (HasCallStack => TxM r a) -> IO a

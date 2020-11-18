@@ -22,7 +22,7 @@ module Database.PostgreSQL.Tx.Internal
     module Database.PostgreSQL.Tx.Internal
   ) where
 
-import Control.Exception (Exception(fromException, toException), SomeException, catch, throwIO)
+import Control.Exception (Exception(toException), SomeException, catch, throwIO)
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Control.Monad.Trans.Reader (ReaderT(ReaderT, runReaderT))
 import Data.Kind (Constraint)
@@ -179,9 +179,6 @@ shouldRetryTx e =
     [ TxSerializationFailure
     , TxDeadlockDetected
     ]
-
-shouldRetryTx' :: (Exception e) => e -> Bool
-shouldRetryTx' = any shouldRetryTx . fromException . toException
 
 fromSqlState :: Maybe String -> TxErrorType
 fromSqlState = \case
