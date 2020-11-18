@@ -5,6 +5,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralisedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -18,13 +19,18 @@ module Database.PostgreSQL.Tx.Squeal.Internal
     module Database.PostgreSQL.Tx.Squeal.Internal
   ) where
 
+import Control.Exception (Exception(fromException))
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Data.Kind (Constraint)
-import Database.PostgreSQL.Tx (TxEnv, TxM, askTxEnv)
+import Database.PostgreSQL.Tx (TxEnv, TxException, TxM, askTxEnv, mapExceptionTx)
 import Database.PostgreSQL.Tx.Squeal.Internal.Reexport
-import Database.PostgreSQL.Tx.Unsafe (unsafeLookupTxEnvIO, unsafeRunIOInTxM, unsafeRunTxM)
+import Database.PostgreSQL.Tx.Unsafe (unsafeLookupTxEnvIO, unsafeMkTxException, unsafeRunIOInTxM, unsafeRunTxM)
 import GHC.TypeLits (ErrorMessage(Text), TypeError)
+import UnliftIO (MonadUnliftIO)
+import qualified Data.ByteString.Char8 as Char8
 import qualified Database.PostgreSQL.LibPQ as LibPQ
+import qualified Squeal.PostgreSQL as Squeal
+import qualified UnliftIO
 
 -- | Runtime environment needed to run @squeal-postgresql@ via @postgresql-tx@.
 --
@@ -93,10 +99,16 @@ newtype SquealConnection =
 mkSquealConnection :: LibPQ.Connection -> SquealConnection
 mkSquealConnection conn = UnsafeSquealConnection (pure conn)
 
+fromSquealException :: SquealException -> TxException
+fromSquealException =
+  unsafeMkTxException \case
+    SQLException SQLState { sqlStateCode } -> Just $ Char8.unpack sqlStateCode
+    _ -> Nothing
+
 unsafeSquealIOTxM
   :: PQ db db IO a
   -> SquealTxM db a
-unsafeSquealIOTxM (PQ f) = SquealTxM do
+unsafeSquealIOTxM (PQ f) = SquealTxM $ mapExceptionTx (Just . fromSquealException) do
   UnsafeSquealConnection { unsafeGetLibPQConnection } <- askTxEnv
   unsafeRunIOInTxM do
     conn <- unsafeGetLibPQConnection
@@ -130,6 +142,32 @@ unsafeRunSquealTransaction f r x = do
   flip evalPQ (K conn)
     $ f
     $ PQ \_ -> K <$> unsafeRunTxM r x
+
+-- | A variant of 'transactionallyRetry' which takes a predicate
+-- for determining when to retry instead of only doing so on
+-- @serialization_failure@.
+transactionallyRetry'
+  :: (MonadUnliftIO m, MonadPQ db m, Exception e)
+  => TransactionMode
+  -> (e -> Bool)
+  -> m a
+  -> m a
+transactionallyRetry' mode shouldRetry action = UnliftIO.mask $ \restore ->
+  loop . UnliftIO.try $ do
+    x <- restore action
+    Squeal.manipulate_ commit
+    return x
+  where
+  loop attempt = do
+    Squeal.manipulate_ $ begin mode
+    attempt >>= \case
+      Right a -> return a
+      Left e -> do
+        Squeal.manipulate_ rollback
+        if any shouldRetry (fromException e) then
+          loop attempt
+        else
+          UnliftIO.throwIO e
 
 -- $disclaimer
 --

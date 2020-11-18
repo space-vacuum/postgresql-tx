@@ -22,12 +22,13 @@ import Control.Monad.Logger (MonadLogger(monadLoggerLog), MonadLoggerIO(askLogge
 import Control.Monad.Reader (ReaderT(ReaderT))
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Kind (Constraint)
-import Database.PostgreSQL.Tx (TxEnvs, TxM, askTxEnv)
+import Database.PostgreSQL.Tx (TxEnvs, TxM, askTxEnv, mapExceptionTx)
 import Database.PostgreSQL.Tx.Query.Internal.Reexport
 import Database.PostgreSQL.Tx.Unsafe (unsafeMkTxM, unsafeRunIOInTxM, unsafeRunTxM, unsafeUnTxM)
 import GHC.Stack (HasCallStack)
 import qualified Database.PostgreSQL.Simple as Simple
 import qualified Database.PostgreSQL.Tx.MonadLogger
+import qualified Database.PostgreSQL.Tx.Simple.Internal as Tx.Simple.Internal
 
 -- | Runtime environment needed to run @postgresql-query@ via @postgresql-tx@.
 --
@@ -74,7 +75,9 @@ unsafeToPgQueryIO :: (HasCallStack) => TxM r a -> UnsafePgQueryIO r a
 unsafeToPgQueryIO x = UnsafePgQueryIO $ unsafeUnTxM x
 
 unsafeFromPgQueryIO :: (HasCallStack) => UnsafePgQueryIO r a -> TxM r a
-unsafeFromPgQueryIO (UnsafePgQueryIO (ReaderT f)) = unsafeMkTxM f
+unsafeFromPgQueryIO (UnsafePgQueryIO (ReaderT f)) =
+  mapExceptionTx (Just . Tx.Simple.Internal.fromSqlError) do
+    unsafeMkTxM f
 
 unsafeRunPgQueryTransaction
   :: (PgQueryEnv r, HasCallStack)

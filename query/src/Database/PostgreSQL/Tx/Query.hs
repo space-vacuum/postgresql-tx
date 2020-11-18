@@ -8,6 +8,7 @@ module Database.PostgreSQL.Tx.Query
   , module Database.PostgreSQL.Tx.Query.Internal.Reexport
   ) where
 
+import Control.Exception (Exception)
 import Data.Int (Int64)
 import Database.PostgreSQL.Tx (TxM)
 import Database.PostgreSQL.Tx.Query.Internal
@@ -15,6 +16,7 @@ import Database.PostgreSQL.Tx.Query.Internal.Reexport
 import GHC.Stack (HasCallStack)
 import qualified Database.PostgreSQL.Query as Query
 import qualified Database.PostgreSQL.Simple.Transaction as Simple
+import qualified Database.PostgreSQL.Tx.Simple as Tx.Simple
 
 -- | Analogue of 'Query.pgWithTransaction'.
 --
@@ -31,6 +33,29 @@ pgWithTransactionMode
   :: (PgQueryEnv r, HasCallStack)
   => Simple.TransactionMode -> r -> (HasCallStack => TxM r a) -> IO a
 pgWithTransactionMode m = unsafeRunPgQueryTransaction (Query.pgWithTransactionMode m)
+
+-- | Analogue of 'Query.pgWithTransactionSerializable'
+-- Unlike @postgresql-query@, uses 'shouldRetryTx' to also retry
+-- on @deadlock_detected@, not just @serialization_failure@.
+--
+-- Note that any 'IO' that occurs inside the 'TxM' may be executed multiple times.
+--
+-- @since 0.2.0.0
+pgWithTransactionSerializable
+  :: (PgQueryEnv r, HasCallStack)
+  => r -> (HasCallStack => TxM r a) -> IO a
+pgWithTransactionSerializable = Tx.Simple.withTransactionSerializable
+
+-- | Analogue of 'Query.pgWithTransactionModeRetry'.
+-- You should generally prefer 'pgWithTransactionSerializable'.
+--
+-- Note that any 'IO' that occurs inside the 'TxM' may be executed multiple times.
+--
+-- @since 0.2.0.0
+pgWithTransactionModeRetry
+  :: (PgQueryEnv r, Exception e, HasCallStack)
+  => Simple.TransactionMode -> (e -> Bool) -> r -> (HasCallStack => TxM r a) -> IO a
+pgWithTransactionModeRetry = Tx.Simple.withTransactionModeRetry
 
 -- | Analogue of 'Query.pgWithSavepoint'.
 --

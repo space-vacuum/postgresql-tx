@@ -14,6 +14,8 @@ module Database.PostgreSQL.Tx.Unsafe
   , unsafeMksTxM
 
   , unsafeLookupTxEnvIO
+
+  , unsafeMkTxException
   ) where
 
 import Database.PostgreSQL.Tx.Internal

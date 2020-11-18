@@ -2,6 +2,7 @@
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeApplications #-}
 module Database.PostgreSQL.Tx.Simple.Internal
@@ -13,8 +14,9 @@ module Database.PostgreSQL.Tx.Simple.Internal
   ) where
 
 import Data.Kind (Constraint)
-import Database.PostgreSQL.Tx (TxEnv, TxM, askTxEnv)
-import Database.PostgreSQL.Tx.Unsafe (unsafeMksTxM, unsafeRunIOInTxM, unsafeRunTxM)
+import Database.PostgreSQL.Tx (TxEnv, TxException, TxM, askTxEnv, mapExceptionTx)
+import Database.PostgreSQL.Tx.Unsafe (unsafeMkTxException, unsafeMksTxM, unsafeRunIOInTxM, unsafeRunTxM)
+import qualified Data.ByteString.Char8 as Char8
 import qualified Database.PostgreSQL.Simple as Simple
 
 -- | Runtime environment needed to run @postgresql-simple@ via @postgresql-tx@.
@@ -36,15 +38,25 @@ unsafeRunTransaction f r x = do
     conn <- askTxEnv
     unsafeRunIOInTxM $ f conn (unsafeRunTxM r x)
 
+fromSqlError :: Simple.SqlError -> TxException
+fromSqlError = unsafeMkTxException (Just . Char8.unpack . Simple.sqlState)
+
+unsafeFromPgSimple
+  :: (Simple.Connection -> IO x)
+  -> PgSimpleM x
+unsafeFromPgSimple f =
+  mapExceptionTx (Just . fromSqlError) do
+    unsafeMksTxM f
+
 unsafeFromPgSimple1
   :: (Simple.Connection -> a1 -> IO x)
   -> a1 -> PgSimpleM x
-unsafeFromPgSimple1 f a1 = unsafeMksTxM \c -> f c a1
+unsafeFromPgSimple1 f a1 = unsafeFromPgSimple \c -> f c a1
 
 unsafeFromPgSimple2
   :: (Simple.Connection -> a1 -> a2 -> IO x)
   -> a1 -> a2 -> PgSimpleM x
-unsafeFromPgSimple2 f a1 a2 = unsafeMksTxM \c -> f c a1 a2
+unsafeFromPgSimple2 f a1 a2 = unsafeFromPgSimple \c -> f c a1 a2
 
 -- $disclaimer
 --
