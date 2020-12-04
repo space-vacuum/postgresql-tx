@@ -2,4 +2,4 @@
 
 ## 0.0.0.0
 
-Development versison - not yet released on Hackage.
+* Development version - not yet released on Hackage.
