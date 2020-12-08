@@ -1,5 +1,5 @@
 name:                postgresql-tx-squeal
-version:             0.3.0.0
+version:             0.3.0.1
 github:              "simspace/postgresql-tx"
 license:             BSD3
 license-file:        LICENSE.md

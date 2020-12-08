@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4e549c81b966b0d51addc9c29b18f25fec88d19f214f14789c2a104dc3e9f388
+-- hash: 5c457d0de45e8cf86de990a2eb6556e120634ecff03b1ad0247e70269cce27a2
 
 name:           postgresql-tx-squeal-compat-simple
-version:        0.2.0.0
+version:        0.2.0.1
 synopsis:       Connection interop from postgresql-simple connections to postgresql-libpq connections.
 description:    Please see the README on GitHub at <https://github.com/simspace/postgresql-tx#readme>
 category:       Database

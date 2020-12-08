@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 66842eb2c8ecef116494783907dbe032bf945a4e2439098e2d7a5f5da57296da
+-- hash: ae3587db37112d1b6f60aa29b6271363f52c6f9c4d1acac320cdcd2041eb7788
 
 name:           postgresql-tx
-version:        0.3.0.0
+version:        0.3.0.1
 synopsis:       A safe transaction monad for use with various PostgreSQL Haskell libraries.
 description:    Please see the README on GitHub at <https://github.com/simspace/postgresql-tx#readme>
 category:       Database
