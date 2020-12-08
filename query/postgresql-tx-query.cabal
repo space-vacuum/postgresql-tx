@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7498846f2b01ad9e081eb318aa0a26362a9b6f87a7aa6220e2d906e3772ad4f8
+-- hash: 689dfd1da635371f74ec28be48899c9f0699aa6cd7e7ba17da16b164a6eb1d0b
 
 name:           postgresql-tx-query
-version:        0.2.0.1
+version:        0.3.0.0
 synopsis:       postgresql-tx interfacing for use with postgresql-query.
 description:    Please see the README on GitHub at <https://github.com/simspace/postgresql-tx#readme>
 category:       Database
@@ -46,9 +46,9 @@ library
     , mtl >=2.2.2 && <2.3
     , postgresql-query >=3.5.0 && <3.6
     , postgresql-simple >=0.6.2 && <0.7
-    , postgresql-tx >=0.2.0.0 && <0.3
-    , postgresql-tx-monad-logger >=0.2.0.0 && <0.3
-    , postgresql-tx-simple >=0.2.0.0 && <0.3
+    , postgresql-tx >=0.3.0.0 && <0.4
+    , postgresql-tx-monad-logger >=0.3.0.0 && <0.4
+    , postgresql-tx-simple >=0.3.0.0 && <0.4
     , transformers >=0.5.6.2 && <0.6
     , transformers-base >=0.4.5.2 && <0.5
   default-language: Haskell2010
