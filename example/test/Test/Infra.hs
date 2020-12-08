@@ -17,10 +17,7 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Logger (LoggingT(LoggingT), runStderrLoggingT)
 import Data.IORef (atomicModifyIORef', newIORef, readIORef)
 import Data.Proxy (Proxy(Proxy))
-import Database.PostgreSQL.Tx
-  ( TxErrorType(TxDeadlockDetected, TxOtherError, TxSerializationFailure), TxException(TxException)
-  , TxM, throwExceptionTx
-  )
+import Database.PostgreSQL.Tx (TxException(TxException), TxM, throwExceptionTx)
 import Database.PostgreSQL.Tx.HEnv (HEnv)
 import Database.PostgreSQL.Tx.Query (Logger)
 import Database.PostgreSQL.Tx.Squeal (SquealConnection)
@@ -72,24 +69,24 @@ testBackend' Backend {..} extraTests = do
               _ -> pure ()
           readIORef counter `shouldReturn` 2
         it "does not retry when not appropriate" $ withAppEnv \appEnv -> do
-          expectTxError (TxOtherError (Just "23503")) do
+          expectTxErrcode "23503" do
             withTransactionSerializable appEnv do
               raiseErrCode "foreign_key_violation"
     describe "TxException" do
       it "wraps serialization_failure" $ withAppEnv \appEnv -> do
-        expectTxError TxSerializationFailure do
+        expectTxErrcode "40001" do
           withTransaction appEnv do
             raiseErrCode "serialization_failure"
       it "wraps deadlock_detected" $ withAppEnv \appEnv -> do
-        expectTxError TxDeadlockDetected do
+        expectTxErrcode "40P01" do
           withTransaction appEnv do
             raiseErrCode "deadlock_detected"
       it "wraps other applicable errors" $ withAppEnv \appEnv -> do
-        expectTxError (TxOtherError (Just "23514")) do
+        expectTxErrcode "23514" do
           withTransaction appEnv do
             raiseErrCode "check_violation"
       it "wraps applicable errors with no specified error code" $ withAppEnv \appEnv -> do
-        expectTxError (TxOtherError (Just "P0001")) do
+        expectTxErrcode "P0001" do
           withTransaction appEnv do
             raiseException "oh noes" Nothing
       it "doesn't wrap inapplicable exceptions" $ withAppEnv \appEnv -> do
@@ -182,11 +179,11 @@ withAppEnv f = do
         , squealConn
         )
 
-expectTxError :: (HasCallStack) => TxErrorType -> IO () -> IO ()
-expectTxError e io = do
+expectTxErrcode :: (HasCallStack) => String -> IO () -> IO ()
+expectTxErrcode e io = do
   try io >>= \case
     Right _ -> expectationFailure "No exception was thrown"
-    Left TxException { Tx.errorType } -> errorType `shouldBe` e
+    Left TxException { errcode } -> errcode `shouldBe` Just e
 
 toLogger :: (LoggingT IO () -> IO ()) -> Logger
 toLogger f loc src lvl msg =

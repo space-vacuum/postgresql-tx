@@ -9,6 +9,7 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -160,43 +161,58 @@ mapExceptionTx mapper action = do
         Nothing -> throwIO ex
         Just ex' -> throwIO ex'
 
+-- | Unified exception type thrown from the database.
+--
+-- Each database backend may throw different types of exceptions.
+-- As a user of @postgresql-tx@, ideally we should be able to
+-- detect exceptions from the database without needing to catch
+-- the database backend's exception type.
+--
+-- The 'errcode' field allows us to introspect the postgresql
+-- @errcode@; see https://www.postgresql.org/docs/current/errcodes-appendix.html
+--
+-- If you need to inspect the exact exception thrown by a database
+-- backend, use the 'cause' field.
 data TxException = TxException
-  { errorType :: TxErrorType
+  { errcode :: Maybe String
   , cause :: SomeException
   } deriving stock (Show)
 
 instance Exception TxException
 
-data TxErrorType =
-    TxSerializationFailure
-  | TxDeadlockDetected
-  | TxOtherError (Maybe String) -- ^ PostgreSQL @errcode@, if applicable.
-    deriving stock (Show, Eq)
+-- | PostgreSQL @errcode@ for @serialization_failure@.
+errcode'serialization_failure :: String
+errcode'serialization_failure = "40001"
 
+-- | PostgreSQL @errcode@ for @deadlock_detected@.
+errcode'deadlock_detected :: String
+errcode'deadlock_detected = "40P01"
+
+-- | Checks if the 'errcode' of a 'TxException' matches the supplied predicate.
+-- If the 'errcode' is 'Nothing', returns 'False'.
+hasErrcode :: (String -> Bool) -> TxException -> Bool
+hasErrcode p TxException { errcode } = any p errcode
+
+-- | Useful as a predicate to indicate when to retry transactions which are
+-- run at isolation level @serializable@
 shouldRetryTx :: TxException -> Bool
-shouldRetryTx e =
-  errorType e `elem`
-    [ TxSerializationFailure
-    , TxDeadlockDetected
-    ]
+shouldRetryTx =
+  hasErrcode
+    (`elem`
+      [ errcode'serialization_failure
+      , errcode'deadlock_detected
+      ])
 
-fromSqlState :: Maybe String -> TxErrorType
-fromSqlState = \case
-  Just "40001" -> TxSerializationFailure
-  Just "40P01" -> TxDeadlockDetected
-  sqlState -> TxOtherError sqlState
-
+-- | Construct a 'TxException' from an @errcode@ accessing function
+-- and the 'cause' exception.
+--
+-- Note that this function should only be used by libraries
+-- which are implementing a database backend for @postgresql-tx@.
 unsafeMkTxException
   :: (Exception e) => (e -> Maybe String) -> e -> TxException
-unsafeMkTxException f = unsafeMkTxException' (fromSqlState . f)
-
-unsafeMkTxException'
-  :: (Exception e)
-  => (e -> TxErrorType)
-  -> e -> TxException
-unsafeMkTxException' f e =
+unsafeMkTxException f e =
   TxException
-    { errorType = f e
+    { errcode = f e
     , cause = toException e
     }
 
