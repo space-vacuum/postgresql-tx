@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: de75a082fc842191537ebebf90b7cab40f5bc05129aa56df357a75d3f0928172
+-- hash: 7498846f2b01ad9e081eb318aa0a26362a9b6f87a7aa6220e2d906e3772ad4f8
 
 name:           postgresql-tx-query
-version:        0.2.0.0
+version:        0.2.0.1
 synopsis:       postgresql-tx interfacing for use with postgresql-query.
 description:    Please see the README on GitHub at <https://github.com/simspace/postgresql-tx#readme>
 category:       Database

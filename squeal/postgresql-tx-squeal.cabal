@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e701f125cf44879463dd9939bb3949bfcb0630c866cf1314ee8a603d80a588e5
+-- hash: ec337412508911d0d13b589988294ff798e4930b18ecbc24c7d990f661ead34a
 
 name:           postgresql-tx-squeal
-version:        0.2.0.0
+version:        0.2.0.1
 synopsis:       postgresql-tx interfacing for use with squeal-postgresql.
 description:    Please see the README on GitHub at <https://github.com/simspace/postgresql-tx#readme>
 category:       Database

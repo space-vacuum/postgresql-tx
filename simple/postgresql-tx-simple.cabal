@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a28e2079196694ad2a65da28273d761629b586f6af9c436a58761fccd48ba274
+-- hash: 991ae0128925410e9e492bdba697d91e89de0c4efc3e00c110020982bda14950
 
 name:           postgresql-tx-simple
-version:        0.2.0.0
+version:        0.2.0.1
 synopsis:       postgresql-tx interfacing for use with postgresql-simple.
 description:    Please see the README on GitHub at <https://github.com/simspace/postgresql-tx#readme>
 category:       Database

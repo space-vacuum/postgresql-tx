@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5d7a346f18014ef008263c19cbdb04cda5e384511dbc3450ebcfcb9ee61f706b
+-- hash: 8b68fcfa4f1a8374f1d87e37eb2ee6620231245f67771a49db4b1b96349f1bb9
 
 name:           postgresql-tx-monad-logger
-version:        0.2.0.0
+version:        0.2.0.1
 synopsis:       postgresql-tx interfacing for use with monad-logger.
 description:    Please see the README on GitHub at <https://github.com/simspace/postgresql-tx#readme>
 category:       Database
