@@ -15,7 +15,6 @@ module Database.PostgreSQL.Tx
   , throwExceptionTx
   , mapExceptionTx
   , TxException(..)
-  , TxErrorType(..)
   , shouldRetryTx
   ) where
 
