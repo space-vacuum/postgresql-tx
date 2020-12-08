@@ -1,5 +1,9 @@
 # Change log
 
+## 0.3.0.0
+
+* Removed `TxErrorType` and change the `errorType` field on `TxException` to `errcode`.
+
 ## 0.2.0.0
 
 * Changed the `TxM` encoding from a plain newtype-over-IO to a reader.

@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: e8f7dcf77f6d4d1a1bb86b0ddc72aed069ceefd877a0155ff4fb51ecceb844ee
+-- hash: 4e549c81b966b0d51addc9c29b18f25fec88d19f214f14789c2a104dc3e9f388
 
 name:           postgresql-tx-squeal-compat-simple
-version:        0.1.0.1
+version:        0.2.0.0
 synopsis:       Connection interop from postgresql-simple connections to postgresql-libpq connections.
 description:    Please see the README on GitHub at <https://github.com/simspace/postgresql-tx#readme>
 category:       Database
@@ -39,5 +39,5 @@ library
   build-depends:
       base >=4.7 && <5
     , postgresql-simple >=0.6.2 && <0.7
-    , postgresql-tx-squeal >=0.2.0.0 && <0.3
+    , postgresql-tx-squeal >=0.3.0.0 && <0.4
   default-language: Haskell2010
