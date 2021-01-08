@@ -12,19 +12,12 @@ packages:
   original:
     hackage: postgresql-simple-0.6.3
 - completed:
-    cabal-file:
-      size: 4959
-      sha256: 8891f4eea893607c6e500d73f5f095e11f5bc7c0c20467e6b9040a3e1be039a5
-    name: postgresql-query
-    version: 3.5.0
-    git: https://github.com/Simspace/postgresql-query
+    hackage: postgresql-query-3.8.1@sha256:a870ec4d376c3afbe7787a164ac01b736fcfdc84e3608e02b3a2a24ce16b04bd,5033
     pantry-tree:
-      size: 2486
-      sha256: da6a8d783aa7e2942f89482ef1965b911ec87a9a10e9ae0c715c8ca4a5e6bc2d
-    commit: b45346d7af5a5de6f083349ac1fcee830afe4112
+      size: 2067
+      sha256: c721775afbdf45f7d18f57288fa098dbfe9f9c02ed89fe47cab3c8f9eb446a6d
   original:
-    git: https://github.com/Simspace/postgresql-query
-    commit: b45346d7af5a5de6f083349ac1fcee830afe4112
+    hackage: postgresql-query-3.8.1
 - completed:
     hackage: squeal-postgresql-0.7.0.1@sha256:dee79b7d3efa0ac62a84f4cbb8c8101f668efab8e38214e0214dd82a261cf4e1,5916
     pantry-tree:
