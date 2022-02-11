@@ -15,6 +15,6 @@ extra-deps:
 - postgresql-query-3.8.1
 
 # {{{ squeal
-- squeal-postgresql-0.7.0.1
+- squeal-postgresql-0.8.1.1
 - free-categories-0.2.0.2
 # }}}

@@ -30,6 +30,7 @@ import UnliftIO (MonadUnliftIO)
 import qualified Data.ByteString.Char8 as Char8
 import qualified Database.PostgreSQL.LibPQ as LibPQ
 import qualified Squeal.PostgreSQL as Squeal
+import qualified Squeal.PostgreSQL.Session.Transaction.Unsafe as SquealUnsafeTx
 import qualified UnliftIO
 
 -- | Runtime environment needed to run @squeal-postgresql@ via @postgresql-tx@.
@@ -155,15 +156,15 @@ transactionallyRetry'
 transactionallyRetry' mode shouldRetry action = UnliftIO.mask $ \restore ->
   loop . UnliftIO.try $ do
     x <- restore action
-    Squeal.manipulate_ commit
+    Squeal.manipulate_ SquealUnsafeTx.commit
     return x
   where
   loop attempt = do
-    Squeal.manipulate_ $ begin mode
+    Squeal.manipulate_ $ SquealUnsafeTx.begin mode
     attempt >>= \case
       Right a -> return a
       Left e -> do
-        Squeal.manipulate_ rollback
+        Squeal.manipulate_ SquealUnsafeTx.rollback
         if any shouldRetry (fromException e) then
           loop attempt
         else

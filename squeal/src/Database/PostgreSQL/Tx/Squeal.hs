@@ -23,9 +23,8 @@ import Database.PostgreSQL.Tx (TxM, shouldRetryTx)
 import Database.PostgreSQL.Tx.Squeal.Internal
 import Database.PostgreSQL.Tx.Squeal.Internal.Reexport
 import qualified Database.PostgreSQL.LibPQ as LibPQ
-import qualified Generics.SOP as SOP
-import qualified Generics.SOP.Record as SOP
 import qualified Squeal.PostgreSQL as Squeal
+import qualified Squeal.PostgreSQL.Session.Transaction.Unsafe as SquealUnsafeTx
 
 -- | Analogue of 'Squeal.getRow'.
 --
@@ -167,8 +166,7 @@ manipulate_ = unsafeSquealIOTxM1 Squeal.manipulate_
 -- @since 0.1.0.0
 runQueryParams
   :: ( GenericParams db params x xs
-     , SOP.IsRecord y ys
-     , SOP.AllZip Squeal.FromField row ys
+     , GenericRow row y ys
      )
   => Squeal.Query '[] '[] db params row -> x -> SquealTxM db (Result y)
 runQueryParams = unsafeSquealIOTxM2 Squeal.runQueryParams
@@ -177,9 +175,7 @@ runQueryParams = unsafeSquealIOTxM2 Squeal.runQueryParams
 --
 -- @since 0.1.0.0
 runQuery
-  :: ( SOP.IsRecord y ys
-     , SOP.AllZip Squeal.FromField row ys
-     )
+  :: GenericRow row y ys
   => Squeal.Query '[] '[] db '[] row -> SquealTxM db (Result y)
 runQuery = unsafeSquealIOTxM1 Squeal.runQuery
 
@@ -188,9 +184,8 @@ runQuery = unsafeSquealIOTxM1 Squeal.runQuery
 -- @since 0.1.0.0
 traversePrepared
   :: ( GenericParams db params x xs
+     , GenericRow row y ys
      , Traversable list
-     , SOP.IsRecord y ys
-     , SOP.AllZip Squeal.FromField row ys
      )
   => Manipulation '[] db params row
   -> list x
@@ -202,9 +197,8 @@ traversePrepared = unsafeSquealIOTxM2 Squeal.traversePrepared
 -- @since 0.1.0.0
 forPrepared
   :: ( GenericParams db params x xs
+     , GenericRow row y ys
      , Traversable list
-     , SOP.IsRecord y ys
-     , SOP.AllZip Squeal.FromField row ys
      )
   => list x
   -> Manipulation '[] db params row
@@ -216,6 +210,7 @@ forPrepared = unsafeSquealIOTxM2 Squeal.forPrepared
 -- @since 0.1.0.0
 traversePrepared_
   :: ( GenericParams db params x xs
+     , GenericRow row y ys
      , Foldable list
      )
   => Manipulation '[] db params '[]
@@ -239,13 +234,13 @@ forPrepared_ = unsafeSquealIOTxM2 Squeal.forPrepared_
 --
 -- @since 0.1.0.0
 transactionally :: (SquealEnv r) => TransactionMode -> r -> TxM r a -> IO a
-transactionally m = unsafeRunSquealTransaction (Squeal.transactionally m)
+transactionally m = unsafeRunSquealTransaction (SquealUnsafeTx.transactionally m)
 
 -- | Analogue of 'Squeal.transactionally_'.
 --
 -- @since 0.1.0.0
 transactionally_ :: (SquealEnv r) => r -> TxM r a -> IO a
-transactionally_ = unsafeRunSquealTransaction Squeal.transactionally_
+transactionally_ = unsafeRunSquealTransaction SquealUnsafeTx.transactionally_
 
 -- | Specialization of 'transactionallyRetry' which uses 'Serializable'
 -- and 'shouldRetryTx' to automatically retry the transaction on
@@ -279,10 +274,10 @@ transactionallyRetry m shouldRetry =
 --
 -- @since 0.1.0.0
 ephemerally :: (SquealEnv r) => TransactionMode -> r -> TxM r a -> IO a
-ephemerally m = unsafeRunSquealTransaction (Squeal.ephemerally m)
+ephemerally m = unsafeRunSquealTransaction (SquealUnsafeTx.ephemerally m)
 
 -- | Analogue of 'Squeal.ephemerally_'.
 --
 -- @since 0.1.0.0
 ephemerally_ :: (SquealEnv r) => r -> TxM r a -> IO a
-ephemerally_ = unsafeRunSquealTransaction Squeal.ephemerally_
+ephemerally_ = unsafeRunSquealTransaction SquealUnsafeTx.ephemerally_

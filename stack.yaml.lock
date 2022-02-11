@@ -19,12 +19,12 @@ packages:
   original:
     hackage: postgresql-query-3.8.1
 - completed:
-    hackage: squeal-postgresql-0.7.0.1@sha256:dee79b7d3efa0ac62a84f4cbb8c8101f668efab8e38214e0214dd82a261cf4e1,5916
+    hackage: squeal-postgresql-0.8.1.1@sha256:f154e2ef346bb5566e98addee7da8977731f8f534698a683c0c4e63cd48ea0f4,5935
     pantry-tree:
-      size: 5824
-      sha256: abaa6e041a6fe0e92f96082bdbdc0037ccd61fc45c56b20c90e3c765ab3e48e7
+      size: 5919
+      sha256: 73bcf48f0cd146ccebe4d1aee508aa5912d0eaa3f8f1f131fe6d2ead3109d398
   original:
-    hackage: squeal-postgresql-0.7.0.1
+    hackage: squeal-postgresql-0.8.1.1
 - completed:
     hackage: free-categories-0.2.0.2@sha256:ce634c030c1dd9a40d101166876ae1d80fb6e4cb02c1755e2cefbcd74a161a69,855
     pantry-tree:

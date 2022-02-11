@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 203abaf7f3b9da409855e32a15abe9437313c9ae22e8d609c7226cd704242b70
+-- hash: 6bbca5caf04d3fdd5133d86915ee9b1b81de091a5b06c657ae5db2f4af11194b
 
 name:           postgresql-tx-squeal
 version:        0.3.0.1
@@ -45,6 +45,6 @@ library
     , postgresql-libpq >=0.9.4.2 && <0.10
     , postgresql-tx >=0.3.0.0 && <0.4
     , records-sop >=0.1.0.3 && <0.2
-    , squeal-postgresql >=0.7.0.1 && <0.8
+    , squeal-postgresql >=0.8.0.0 && <0.9
     , unliftio >=0.2.13 && <0.3
   default-language: Haskell2010
