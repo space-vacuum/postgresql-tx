@@ -16,9 +16,10 @@ module Database.PostgreSQL.Tx.HEnv
   ) where
 
 import Database.PostgreSQL.Tx (TxEnv(lookupTxEnv))
+import Data.Kind (Type)
 
 -- | Glorified hlist used to construct ad hoc @tx@ runtime environments.
-data family HEnv (l :: [*])
+data family HEnv (l :: [Type])
 data instance HEnv '[] = Nil
 data instance HEnv (x ': xs) = x `Cons` HEnv xs
 infixr 2 `Cons`

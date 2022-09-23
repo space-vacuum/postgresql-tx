@@ -1,20 +1,21 @@
-resolver: lts-16.8
-
+resolver: nightly-2022-09-23
 packages:
-- .
-- example
-- monad-logger
-- persistent
-- query
-- simple
-- squeal
-- squeal/compat/simple
-
+  - .
+  - example
+  - monad-logger
+  - persistent
+  - query
+  - simple
+  - squeal
+  - squeal/compat/simple
 extra-deps:
-- postgresql-simple-0.6.3
-- postgresql-query-3.8.1
+  - git: https://github.com/space-vacuum/postgresql-simple.git
+    commit: 44d29c4b870c09b03882d771d2714b06b344e9c8
+  - git: https://github.com/kosmikus/records-sop.git
+    commit: abab99b4b870fce55e81dd03d4e41fb50502ca4e
+  - postgresql-query-3.10.0
 
-# {{{ squeal
-- squeal-postgresql-0.8.1.1
-- free-categories-0.2.0.2
-# }}}
+  # {{{ squeal
+  - squeal-postgresql-0.8.1.1
+  - free-categories-0.2.0.2
+  # }}}

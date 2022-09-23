@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6bbca5caf04d3fdd5133d86915ee9b1b81de091a5b06c657ae5db2f4af11194b
+-- hash: 9a104386c00f40e42933a61319f0612238153dfa5bd7a8f7c158467930b6eea1
 
 name:           postgresql-tx-squeal
 version:        0.3.0.1
@@ -40,7 +40,7 @@ library
   ghc-options: -Wall
   build-depends:
       base >=4.7 && <5
-    , bytestring >=0.10.10.0 && <0.11
+    , bytestring >=0.10.10.0 && <0.12
     , generics-sop >=0.5.1.0 && <0.6
     , postgresql-libpq >=0.9.4.2 && <0.10
     , postgresql-tx >=0.3.0.0 && <0.4

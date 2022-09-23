@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.31.2.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0eec97fd7ef0044aac9aa4aca089dc69de2c08d3b3c8270fd0673c5ff8d477dc
+-- hash: 2622dec868a15cea539e934314b69b21a218a6b0f9fbb69bdf1f71f2aa565877
 
 name:           postgresql-tx-persistent
 version:        0.0.0.0
@@ -41,7 +41,7 @@ library
       base >=4.7 && <5
     , monad-logger >=0.3.32 && <0.4
     , mtl >=2.2.2 && <2.3
-    , persistent >=2.10.5.2 && <2.11
-    , persistent-postgresql >=2.10.1.2 && <2.11
+    , persistent >=2.10.5.2 && <2.15
+    , persistent-postgresql >=2.10.1.2 && <2.14
     , postgresql-tx >=0.3.0.0 && <0.4
   default-language: Haskell2010

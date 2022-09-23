@@ -5,19 +5,34 @@
 
 packages:
 - completed:
-    hackage: postgresql-simple-0.6.3@sha256:d42d397fc8cba02ee24d1138e5c7c2f6c38803cf6cf0ec5afae4334e5f4f3d5c,5164
+    name: postgresql-simple
+    version: 0.6.4
+    git: https://github.com/space-vacuum/postgresql-simple.git
     pantry-tree:
-      size: 4139
-      sha256: 552c3236396547af44247cc8527a18427b543e68f6d0efbc42e26cd11e153c59
+      size: 4874
+      sha256: 4a2b885153a957a9738e5989d3c776397582f6aa097615b5c60c6ab4db12ac7d
+    commit: 44d29c4b870c09b03882d771d2714b06b344e9c8
   original:
-    hackage: postgresql-simple-0.6.3
+    git: https://github.com/space-vacuum/postgresql-simple.git
+    commit: 44d29c4b870c09b03882d771d2714b06b344e9c8
 - completed:
-    hackage: postgresql-query-3.8.1@sha256:a870ec4d376c3afbe7787a164ac01b736fcfdc84e3608e02b3a2a24ce16b04bd,5033
+    name: records-sop
+    version: 0.1.1.0
+    git: https://github.com/kosmikus/records-sop.git
     pantry-tree:
-      size: 2067
-      sha256: c721775afbdf45f7d18f57288fa098dbfe9f9c02ed89fe47cab3c8f9eb446a6d
+      size: 535
+      sha256: f7d39caff715b148c2047b82fcc45ef6cde2610abc798f5beeb76159202be314
+    commit: abab99b4b870fce55e81dd03d4e41fb50502ca4e
   original:
-    hackage: postgresql-query-3.8.1
+    git: https://github.com/kosmikus/records-sop.git
+    commit: abab99b4b870fce55e81dd03d4e41fb50502ca4e
+- completed:
+    hackage: postgresql-query-3.10.0@sha256:bad59810fc464cf0f4a839a9c6372ba17c54fd04500a50e16fb46d578a0649ae,6320
+    pantry-tree:
+      size: 2123
+      sha256: 29015669d6a00757ff0c67e2abe344a2456848d27ccbaf0875693eb66e6b04d8
+  original:
+    hackage: postgresql-query-3.10.0
 - completed:
     hackage: squeal-postgresql-0.8.1.1@sha256:f154e2ef346bb5566e98addee7da8977731f8f534698a683c0c4e63cd48ea0f4,5935
     pantry-tree:
@@ -34,7 +49,7 @@ packages:
     hackage: free-categories-0.2.0.2
 snapshots:
 - completed:
-    size: 532379
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/16/8.yaml
-    sha256: 2ad3210d2ad35f3176005d68369a18e4d984517bfaa2caade76f28ed0b2e0521
-  original: lts-16.8
+    size: 636747
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/9/23.yaml
+    sha256: a2f307c3e8087b22aa65b23870ebe3e612573a7a1f52f86e6c46c42419496c95
+  original: nightly-2022-09-23

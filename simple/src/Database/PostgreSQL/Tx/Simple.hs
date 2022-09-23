@@ -28,7 +28,7 @@ withTransaction = unsafeRunTransaction Simple.withTransaction
 withTransactionLevel
   :: (PgSimpleEnv r, HasCallStack)
   => Simple.IsolationLevel -> r -> (HasCallStack => TxM r a) -> IO a
-withTransactionLevel = unsafeRunTransaction . Simple.withTransactionLevel
+withTransactionLevel i = unsafeRunTransaction (Simple.withTransactionLevel i) 
 
 -- | Analogue of 'Simple.withTransactionMode'.
 --
@@ -36,7 +36,7 @@ withTransactionLevel = unsafeRunTransaction . Simple.withTransactionLevel
 withTransactionMode
   :: (PgSimpleEnv r, HasCallStack)
   => Simple.TransactionMode -> r -> (HasCallStack => TxM r a) -> IO a
-withTransactionMode = unsafeRunTransaction . Simple.withTransactionMode
+withTransactionMode m = unsafeRunTransaction (Simple.withTransactionMode m)
 
 -- | Analogue of 'Simple.withTransactionSerializable'.
 -- Unlike @postgresql-simple@, uses 'shouldRetryTx' to also retry

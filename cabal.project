@@ -1,0 +1,19 @@
+packages:
+    .
+    example
+    monad-logger
+    persistent
+    query
+    simple
+    squeal
+    squeal/compat/simple
+
+source-repository-package
+    type: git
+    location: https://github.com/space-vacuum/postgresql-simple.git
+    tag: 44d29c4b870c09b03882d771d2714b06b344e9c8
+
+source-repository-package
+    type: git
+    location: https://github.com/kosmikus/records-sop.git
+    tag: abab99b4b870fce55e81dd03d4e41fb50502ca4e

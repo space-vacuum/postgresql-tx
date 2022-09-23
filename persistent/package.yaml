@@ -23,8 +23,8 @@ dependencies:
 - base >= 4.7 && < 5
 - monad-logger >= 0.3.32 && < 0.4
 - mtl >= 2.2.2 && < 2.3
-- persistent >= 2.10.5.2 && < 2.11
-- persistent-postgresql >= 2.10.1.2 && < 2.11
+- persistent >= 2.10.5.2 && < 2.15
+- persistent-postgresql >= 2.10.1.2 && < 2.14
 - postgresql-tx >= 0.3.0.0 && < 0.4
 
 library:
